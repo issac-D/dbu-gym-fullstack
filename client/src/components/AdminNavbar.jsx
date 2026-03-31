@@ -25,7 +25,7 @@ export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
           <button
             type="button"
             onClick={onToggleTheme}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text)]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text)] hover:border-[var(--accent)]"
             aria-label="Toggle theme"
           >
             <i className={theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon'}></i>

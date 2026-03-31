@@ -132,6 +132,29 @@ function LineChart({ labels, joined, expired }) {
 
   return (
     <svg viewBox="0 0 100 100" className="h-full w-full">
+      {[0, 25, 50, 75, 100].map((line) => (
+        <line
+          key={line}
+          x1="0"
+          y1={line}
+          x2="100"
+          y2={line}
+          stroke="var(--border)"
+          strokeDasharray="2 3"
+          strokeWidth="0.6"
+        />
+      ))}
+      {[0, 25, 50, 75, 100].map((line) => (
+        <text
+          key={`t-${line}`}
+          x="2"
+          y={line + 3}
+          fontSize="4"
+          fill="var(--text-soft)"
+        >
+          {Math.round((1 - line / 100) * max)}
+        </text>
+      ))}
       <polyline
         fill="none"
         stroke="var(--accent)"
@@ -144,6 +167,18 @@ function LineChart({ labels, joined, expired }) {
         strokeWidth="3"
         points={points(expired)}
       />
+      {labels.map((label, index) => (
+        <text
+          key={label}
+          x={(index / (labels.length - 1 || 1)) * 100}
+          y="98"
+          fontSize="4"
+          textAnchor="middle"
+          fill="var(--text-soft)"
+        >
+          {label}
+        </text>
+      ))}
     </svg>
   )
 }
@@ -387,7 +422,7 @@ export default function AdminDashboard() {
         </div>
 
         {stats.expired > 0 ? (
-          <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="mt-6 rounded-2xl border border-[var(--danger-border)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
             Attention: {stats.expired} expired members.
           </div>
         ) : null}
