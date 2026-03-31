@@ -1,7 +1,19 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import adminLogo from '../assets/admin-logo.png'
+import { useAuth } from '../auth/AuthProvider'
 
 export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } finally {
+      navigate('/login')
+    }
+  }
+
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface-strong)]/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 md:px-8">
@@ -21,7 +33,7 @@ export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
           <Link className="text-[var(--text-muted)]" to="#member-management">
             Members
           </Link>
-          <Link className="text-[var(--text-muted)]" to="#">
+          <Link className="text-[var(--text-muted)]" to="/admin/settings">
             Settings
           </Link>
         </nav>
@@ -53,12 +65,13 @@ export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
               <Link to="/admin/settings" className="block rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent)]">
                 System Settings
               </Link>
-              <Link
-                to="/login"
+              <button
+                type="button"
+                onClick={handleLogout}
                 className="mt-2 block w-full rounded-lg border border-red-400/60 px-3 py-2 text-center text-xs font-semibold text-red-200"
               >
                 Logout
-              </Link>
+              </button>
             </div>
           </details>
         </div>

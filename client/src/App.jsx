@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
+import ProtectedRoute from './auth/ProtectedRoute'
 import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import MembersDashboard from './pages/members/dashboard'
 import EditProfile from './pages/members/EditProfile'
 import AdminDashboard from './pages/admin/Dashboard'
 import Approvals from './pages/admin/Approvals'
 import AdminProfile from './pages/admin/Profile'
 import AdminSettings from './pages/admin/Settings'
-import Register from './pages/Register'
 
 function getInitialTheme() {
   if (typeof window === 'undefined') return 'dark'
@@ -51,12 +52,18 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/members/dashboard" element={<MembersDashboard />} />
-      <Route path="/members/profile" element={<EditProfile />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/approvals" element={<Approvals />} />
-      <Route path="/admin/profile" element={<AdminProfile />} />
-      <Route path="/admin/settings" element={<AdminSettings />} />
+
+      <Route element={<ProtectedRoute role="member" />}>
+        <Route path="/members/dashboard" element={<MembersDashboard />} />
+        <Route path="/members/profile" element={<EditProfile />} />
+      </Route>
+
+      <Route element={<ProtectedRoute role="admin" />}>
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/approvals" element={<Approvals />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
+        <Route path="/admin/settings" element={<AdminSettings />} />
+      </Route>
     </Routes>
   )
 }

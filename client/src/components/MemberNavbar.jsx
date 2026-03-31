@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthProvider'
 
 function DumbbellIcon({ className }) {
   return (
@@ -39,6 +40,17 @@ function NavLink({ to, children, active }) {
 }
 
 export default function MemberNavbar({ memberName }) {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } finally {
+      navigate('/login')
+    }
+  }
+
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg-alt)]">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 md:px-8">
@@ -77,12 +89,13 @@ export default function MemberNavbar({ memberName }) {
                 Dashboard
               </NavLink>
               <NavLink to="/members/profile">Edit Profile</NavLink>
-              <Link
-                to="/login"
+              <button
+                type="button"
+                onClick={handleLogout}
                 className="mt-2 rounded-full border border-red-400/60 px-4 py-2 text-center text-xs font-semibold text-red-200 transition hover:bg-red-500/20"
               >
                 Logout
-              </Link>
+              </button>
             </div>
           </div>
         </details>

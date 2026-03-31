@@ -1,4 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useAuth } from '../auth/AuthProvider'
 
 function DumbbellIcon({ className }) {
   return (
@@ -63,26 +65,33 @@ function LockIcon({ className }) {
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const form = event.currentTarget
     const email = form.elements.email?.value?.trim()
     const password = form.elements.password?.value
 
-    if (email === 'member@dbugym.com' && password === 'Dbu@1234') {
-      navigate('/members/dashboard')
+    if (!email || !password) {
+      setError('Please enter your email and password.')
       return
     }
 
-    if (email === 'admin@dbugym.com' && password === 'Admin@1234') {
-      navigate('/admin/dashboard')
-      return
-    }
+    setError('')
+    setSubmitting(true)
 
-    // Simple demo feedback for now
-    // eslint-disable-next-line no-alert
-    alert('Invalid demo credentials. Use member@dbugym.com / Dbu@1234 or admin@dbugym.com / Admin@1234')
+    try {
+      const user = await login({ email, password })
+      const resolvedRole = user?.email === 'admin@dbugym.com' ? 'admin' : 'member'
+      navigate(resolvedRole === 'admin' ? '/admin/dashboard' : '/members/dashboard')
+    } catch (err) {
+      setError(err?.message || 'Login failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -137,11 +146,18 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)]"
+                disabled={submitting}
+                className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Log In
+                {submitting ? 'Signing in…' : 'Log In'}
               </button>
             </form>
+
+            {error ? (
+              <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-100">
+                {error}
+              </div>
+            ) : null}
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
               Demo member: <span className="text-[var(--accent)]">member@dbugym.com</span>{' '}

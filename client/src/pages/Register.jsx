@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useAuth } from '../auth/AuthProvider'
 
 function DumbbellIcon({ className }) {
   return (
@@ -80,6 +82,42 @@ function UserIcon({ className }) {
 }
 
 export default function Register() {
+  const navigate = useNavigate()
+  const { register } = useAuth()
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    const name = form.elements.name?.value?.trim()
+    const email = form.elements.email?.value?.trim()
+    const password = form.elements.password?.value
+    const passwordConfirmation = form.elements.password_confirmation?.value
+
+    if (!name || !email || !password || !passwordConfirmation) {
+      setError('Please complete all fields.')
+      return
+    }
+
+    setError('')
+    setSubmitting(true)
+
+    try {
+      await register({
+        name,
+        email,
+        password,
+        password_confirmation: passwordConfirmation,
+      })
+      navigate('/members/dashboard')
+    } catch (err) {
+      setError(err?.message || 'Registration failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-25" />
@@ -101,13 +139,14 @@ export default function Register() {
           </div>
 
           <div className="glass-panel rounded-3xl p-6 shadow-2xl md:p-8">
-            <form className="space-y-5">
+            <form className="space-y-5" onSubmit={handleSubmit}>
               <label className="block text-sm text-white/70">
                 Full Name
                 <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
                   <UserIcon className="h-5 w-5 text-[var(--accent)]" />
                   <input
                     type="text"
+                    name="name"
                     placeholder="Your name"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
@@ -120,6 +159,7 @@ export default function Register() {
                   <MailIcon className="h-5 w-5 text-[var(--accent)]" />
                   <input
                     type="email"
+                    name="email"
                     placeholder="you@example.com"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
@@ -132,6 +172,20 @@ export default function Register() {
                   <LockIcon className="h-5 w-5 text-[var(--accent)]" />
                   <input
                     type="password"
+                    name="password"
+                    placeholder="••••••••"
+                    className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                  />
+                </div>
+              </label>
+
+              <label className="block text-sm text-white/70">
+                Confirm Password
+                <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                  <LockIcon className="h-5 w-5 text-[var(--accent)]" />
+                  <input
+                    type="password"
+                    name="password_confirmation"
                     placeholder="••••••••"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
@@ -140,11 +194,18 @@ export default function Register() {
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)]"
+                disabled={submitting}
+                className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Create Account
+                {submitting ? 'Creating…' : 'Create Account'}
               </button>
             </form>
+
+            {error ? (
+              <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-100">
+                {error}
+              </div>
+            ) : null}
 
             <p className="mt-6 text-center text-sm text-white/60">
               Already have an account?{' '}
