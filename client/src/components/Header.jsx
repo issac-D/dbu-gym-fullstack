@@ -117,7 +117,7 @@ export default function Header({ theme, onToggleTheme, toggleLabel }) {
           </button>
           <Link
             to="/login"
-            className="hidden rounded-full border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent)] hover:text-black sm:inline-flex"
+            className="rounded-full border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent)] hover:text-black"
           >
             Login / Register
           </Link>
