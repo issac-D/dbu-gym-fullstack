@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import About from './components/About'
-import Apparatus from './components/Apparatus'
-import Contact from './components/Contact'
-import Footer from './components/Footer'
-import Header from './components/Header'
-import Hero from './components/Hero'
-import Pricing from './components/Pricing'
+import { Route, Routes } from 'react-router-dom'
+import Home from './pages/Home'
+import Login from './pages/Login'
+import Register from './pages/Register'
 
 function getInitialTheme() {
   if (typeof window === 'undefined') return 'dark'
@@ -28,21 +25,24 @@ export default function App() {
     [theme]
   )
 
+  const handleToggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }
+
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      <Header
-        theme={theme}
-        onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        toggleLabel={toggleLabel}
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <Home
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            toggleLabel={toggleLabel}
+          />
+        }
       />
-      <main>
-        <Hero />
-        <About />
-        <Apparatus />
-        <Pricing />
-        <Contact />
-      </main>
-      <Footer />
-    </div>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+    </Routes>
   )
 }
