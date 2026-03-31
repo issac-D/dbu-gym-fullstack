@@ -82,9 +82,9 @@ export default function Footer() {
             Contact
           </p>
           <div className="mt-4 space-y-2 text-sm text-[var(--text-muted)]">
-            <p>Piassa, Addis Ababa</p>
-            <p>+251 911 123 456</p>
-            <p>hello@dbugym.com</p>
+            <p>Tebase, Debre Berhan</p>
+            <p>+251 932 123 456</p>
+            <p>info@dbugym.com</p>
           </div>
           <form className="mt-5 flex items-center gap-2">
             <input
