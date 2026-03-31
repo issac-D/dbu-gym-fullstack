@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 function DumbbellIcon({ className }) {
   return (
@@ -62,6 +62,24 @@ function LockIcon({ className }) {
 }
 
 export default function Login() {
+  const navigate = useNavigate()
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    const email = form.elements.email?.value?.trim()
+    const password = form.elements.password?.value
+
+    if (email === 'member@dbugym.com' && password === 'Dbu@1234') {
+      navigate('/members/dashboard')
+      return
+    }
+
+    // Simple demo feedback for now
+    // eslint-disable-next-line no-alert
+    alert('Invalid demo credentials. Use member@dbugym.com / Dbu@1234')
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-25" />
@@ -83,14 +101,16 @@ export default function Login() {
           </div>
 
           <div className="glass-panel rounded-3xl p-6 shadow-2xl md:p-8">
-            <form className="space-y-5">
+            <form className="space-y-5" onSubmit={handleSubmit}>
               <label className="block text-sm text-white/70">
                 Email Address
                 <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
                   <MailIcon className="h-5 w-5 text-[var(--accent)]" />
                   <input
                     type="email"
+                    name="email"
                     placeholder="you@example.com"
+                    defaultValue="member@dbugym.com"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
                 </div>
@@ -102,7 +122,9 @@ export default function Login() {
                   <LockIcon className="h-5 w-5 text-[var(--accent)]" />
                   <input
                     type="password"
+                    name="password"
                     placeholder="••••••••"
+                    defaultValue="Dbu@1234"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
                 </div>
@@ -115,6 +137,11 @@ export default function Login() {
                 Log In
               </button>
             </form>
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
+              Demo login: <span className="text-[var(--accent)]">member@dbugym.com</span>{' '}
+              / <span className="text-[var(--accent)]">Dbu@1234</span>
+            </div>
 
             <div className="mt-6 text-center text-sm text-white/60">
               <Link to="/forgot" className="text-[var(--accent)] hover:underline">

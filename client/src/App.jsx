@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import MembersDashboard from './pages/members/dashboard'
 import Register from './pages/Register'
 
 function getInitialTheme() {
@@ -45,6 +46,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/members/dashboard" element={<MembersDashboard />} />
     </Routes>
   )
 }
