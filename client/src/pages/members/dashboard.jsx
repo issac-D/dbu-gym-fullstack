@@ -1,3 +1,4 @@
+import Footer from '../../components/Footer'
 import MemberNavbar from '../../components/MemberNavbar'
 
 const member = {
@@ -161,6 +162,7 @@ export default function Dashboard() {
           </aside>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }
