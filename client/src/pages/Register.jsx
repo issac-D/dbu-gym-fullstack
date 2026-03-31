@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 function DumbbellIcon({ className }) {
   return (
     <svg
@@ -86,9 +88,12 @@ export default function Register() {
       <main className="relative z-10 flex min-h-screen items-center justify-center px-6 py-16">
         <div className="w-full max-w-md">
           <div className="mb-6 text-center">
-            <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-[var(--accent)] shadow-[0_0_30px_var(--accent-glow)]">
+            <Link
+              to="/"
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-[var(--accent)] shadow-[0_0_30px_var(--accent-glow)]"
+            >
               <DumbbellIcon className="h-8 w-8" />
-            </span>
+            </Link>
             <h1 className="font-display text-3xl font-semibold text-white">
               Join DBU Gym
             </h1>
@@ -143,9 +148,9 @@ export default function Register() {
 
             <p className="mt-6 text-center text-sm text-white/60">
               Already have an account?{' '}
-              <a href="/login" className="text-[var(--accent)] hover:underline">
+              <Link to="/login" className="text-[var(--accent)] hover:underline">
                 Log in
-              </a>
+              </Link>
             </p>
           </div>
         </div>
