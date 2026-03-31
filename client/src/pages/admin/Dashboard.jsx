@@ -124,37 +124,43 @@ function LineChart({ labels, joined, expired }) {
   const points = (data) =>
     data
       .map((value, index) => {
-        const x = (index / (data.length - 1 || 1)) * 100
-        const y = 100 - (value / max) * 100
+        const x = 8 + (index / (data.length - 1 || 1)) * 84
+        const y = 8 + (1 - value / max) * 78
         return `${x},${y}`
       })
       .join(' ')
 
   return (
     <svg viewBox="0 0 100 100" className="h-full w-full">
-      {[0, 25, 50, 75, 100].map((line) => (
+      {[0, 25, 50, 75, 100].map((line) => {
+        const y = 8 + (line / 100) * 78
+        return (
         <line
-          key={line}
-          x1="0"
-          y1={line}
-          x2="100"
-          y2={line}
+          key={`grid-${line}`}
+          x1="8"
+          y1={y}
+          x2="92"
+          y2={y}
           stroke="var(--border)"
           strokeDasharray="2 3"
           strokeWidth="0.6"
         />
-      ))}
-      {[0, 25, 50, 75, 100].map((line) => (
+        )
+      })}
+      {[0, 25, 50, 75, 100].map((line) => {
+        const y = 8 + (line / 100) * 78
+        return (
         <text
-          key={`t-${line}`}
+          key={`tick-${line}`}
           x="2"
-          y={line + 3}
+          y={y + 2}
           fontSize="4"
           fill="var(--text-soft)"
         >
           {Math.round((1 - line / 100) * max)}
         </text>
-      ))}
+        )
+      })}
       <polyline
         fill="none"
         stroke="var(--accent)"
@@ -170,7 +176,7 @@ function LineChart({ labels, joined, expired }) {
       {labels.map((label, index) => (
         <text
           key={label}
-          x={(index / (labels.length - 1 || 1)) * 100}
+          x={8 + (index / (labels.length - 1 || 1)) * 84}
           y="98"
           fontSize="4"
           textAnchor="middle"
@@ -432,11 +438,6 @@ export default function AdminDashboard() {
             <h2 className="text-lg font-semibold">Membership Trends (6 Months)</h2>
             <div className="mt-4 h-60">
               <LineChart labels={chartData.labels} joined={chartData.joined} expired={chartData.expired} />
-            </div>
-            <div className="mt-4 flex flex-wrap gap-4 text-xs text-[var(--text-soft)]">
-              {chartData.labels.map((label) => (
-                <span key={label}>{label}</span>
-              ))}
             </div>
           </div>
           <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
