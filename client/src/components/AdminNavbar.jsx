@@ -43,14 +43,14 @@ export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
               <p className="px-3 pb-2 text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
                 Profile
               </p>
-              <Link to="#" className="block rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent)]">
+              <Link to="/admin/profile" className="block rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent)]">
                 Profile Settings
               </Link>
               <div className="my-2 border-t border-[var(--border)]"></div>
               <p className="px-3 pb-2 text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
                 System
               </p>
-              <Link to="#" className="block rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent)]">
+              <Link to="/admin/settings" className="block rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent)]">
                 System Settings
               </Link>
               <Link
