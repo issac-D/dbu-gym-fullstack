@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import Footer from '../../components/Footer'
 import MemberNavbar from '../../components/MemberNavbar'
 
@@ -12,6 +13,43 @@ const member = {
 }
 
 export default function EditProfile() {
+  const [previewUrl, setPreviewUrl] = useState('')
+  const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
+
+  const handlePickImage = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+
+    const nextUrl = URL.createObjectURL(file)
+    setPreviewUrl(nextUrl)
+  }
+
+  const handleRemoveImage = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+    setPreviewUrl('')
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <MemberNavbar memberName={member.name} />
@@ -24,17 +62,40 @@ export default function EditProfile() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_2fr]">
           <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center">
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-strong)] text-2xl text-[var(--accent)]">
-              ME
+            <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--surface-strong)] text-2xl text-[var(--accent)]">
+              {previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt="Profile preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                'ME'
+              )}
             </div>
             <h2 className="mt-4 text-lg font-semibold">{member.name}</h2>
             <p className="text-xs text-[var(--text-soft)]">ID: {member.memberId}</p>
 
             <div className="mt-6 space-y-3">
-              <button className="w-full rounded-full border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={handlePickImage}
+                className="w-full rounded-full border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black"
+              >
                 Update Picture
               </button>
-              <button className="w-full rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text-soft)] transition hover:border-[var(--accent)]">
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="w-full rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text-soft)] transition hover:border-[var(--accent)]"
+              >
                 Remove Picture
               </button>
             </div>

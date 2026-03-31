@@ -75,9 +75,14 @@ export default function Login() {
       return
     }
 
+    if (email === 'admin@dbugym.com' && password === 'Admin@1234') {
+      navigate('/admin/dashboard')
+      return
+    }
+
     // Simple demo feedback for now
     // eslint-disable-next-line no-alert
-    alert('Invalid demo credentials. Use member@dbugym.com / Dbu@1234')
+    alert('Invalid demo credentials. Use member@dbugym.com / Dbu@1234 or admin@dbugym.com / Admin@1234')
   }
 
   return (
@@ -139,8 +144,11 @@ export default function Login() {
             </form>
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
-              Demo login: <span className="text-[var(--accent)]">member@dbugym.com</span>{' '}
+              Demo member: <span className="text-[var(--accent)]">member@dbugym.com</span>{' '}
               / <span className="text-[var(--accent)]">Dbu@1234</span>
+              <br />
+              Demo admin: <span className="text-[var(--accent)]">admin@dbugym.com</span>{' '}
+              / <span className="text-[var(--accent)]">Admin@1234</span>
             </div>
 
             <div className="mt-6 text-center text-sm text-white/60">

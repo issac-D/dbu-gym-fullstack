@@ -77,9 +77,12 @@ export default function MemberNavbar({ memberName }) {
                 Dashboard
               </NavLink>
               <NavLink to="/members/profile">Edit Profile</NavLink>
-              <button className="mt-2 rounded-full border border-red-400/60 px-4 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20">
+              <Link
+                to="/login"
+                className="mt-2 rounded-full border border-red-400/60 px-4 py-2 text-center text-xs font-semibold text-red-200 transition hover:bg-red-500/20"
+              >
                 Logout
-              </button>
+              </Link>
             </div>
           </div>
         </details>

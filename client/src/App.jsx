@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import MembersDashboard from './pages/members/dashboard'
 import EditProfile from './pages/members/EditProfile'
+import AdminDashboard from './pages/admin/Dashboard'
 import Register from './pages/Register'
 
 function getInitialTheme() {
@@ -49,6 +50,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/members/dashboard" element={<MembersDashboard />} />
       <Route path="/members/profile" element={<EditProfile />} />
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
     </Routes>
   )
 }
