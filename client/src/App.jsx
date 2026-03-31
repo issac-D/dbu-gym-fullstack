@@ -160,10 +160,10 @@ export default function App() {
       <header className="fixed inset-x-0 top-0 z-20 border-b border-[var(--border)] bg-[var(--surface-strong)] backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-4 md:px-8">
           <a href="#home" className="flex items-center gap-3 text-lg font-semibold">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--accent)]">
-              <DumbbellIcon className="h-6 w-6" />
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--accent)] glow-ring">
+              <DumbbellIcon className="h-8 w-8" />
             </span>
-            <span className="font-display text-3xl tracking-wide">
+            <span className="font-display text-4xl tracking-wide md:text-5xl">
               <span className="text-[var(--accent)]">DBU</span>GYM
             </span>
           </a>
@@ -181,7 +181,7 @@ export default function App() {
               type="button"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               aria-label={toggleLabel}
-              className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs font-semibold text-[var(--text)] transition hover:border-[var(--accent)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs font-semibold text-[var(--text)] transition hover:border-[var(--accent)] hover:shadow-[0_0_25px_var(--accent-glow)]"
             >
               {theme === 'dark' ? (
                 <SunIcon className="h-4 w-4 text-[var(--accent)]" />
@@ -210,21 +210,21 @@ export default function App() {
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center" />
           <div className="absolute inset-0 bg-[var(--hero-overlay)]" />
           <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-6 text-center">
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs uppercase tracking-[0.3em] text-[var(--text-soft)] animate-fade-up">
               Stronger Every Day
             </p>
-            <h1 className="font-display text-4xl font-semibold leading-tight tracking-wide text-[var(--text)] md:text-6xl">
+            <h1 className="font-display text-4xl font-semibold leading-tight tracking-wide text-[var(--text)] md:text-6xl animate-fade-up">
               Build Your <span className="text-[var(--accent)]">Dream Body</span>
             </h1>
-            <p className="mt-5 max-w-2xl text-base text-[var(--text-muted)] md:text-lg">
+            <p className="mt-5 max-w-2xl text-base text-[var(--text-muted)] md:text-lg animate-fade-up">
               State of the art equipment, expert trainers, and a community that
               supports your goals. Train smarter, recover faster, and show up for
               the strongest version of yourself.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 animate-fade-up">
               <a
                 href="#pricing"
-                className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-black transition hover:translate-y-[-2px] hover:bg-[var(--accent-strong)]"
+                className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-black shadow-[0_10px_30px_var(--accent-glow)] transition hover:translate-y-[-2px] hover:bg-[var(--accent-strong)]"
               >
                 Join Now
               </a>
@@ -243,7 +243,7 @@ export default function App() {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4"
+                  className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 backdrop-blur animate-fade-up"
                 >
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-soft)]">
                     {item.label}
@@ -279,7 +279,7 @@ export default function App() {
                   'Personalized Programs',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--accent)]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--accent)] animate-pulse-glow">
                       ✓
                     </span>
                     <span>{item}</span>
@@ -287,7 +287,7 @@ export default function App() {
                 ))}
               </div>
             </div>
-            <div className="relative">
+            <div className="relative animate-float">
               <div className="absolute -inset-4 rounded-3xl border border-[var(--border)]" />
               <img
                 src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
@@ -315,7 +315,7 @@ export default function App() {
               {apparatusItems.map((item) => (
                 <div
                   key={item.title}
-                  className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 transition hover:-translate-y-2 hover:border-[var(--accent)]"
+                  className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 transition hover:-translate-y-2 hover:border-[var(--accent)] card-sheen"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--accent)]">
                     <DumbbellIcon className="h-6 w-6" />
@@ -346,7 +346,7 @@ export default function App() {
               </p>
             </div>
 
-            <div className="mt-10 rounded-2xl border border-[var(--accent)] bg-[var(--surface)] px-6 py-5 text-sm text-[var(--text-muted)]">
+            <div className="mt-10 rounded-2xl border border-[var(--accent)] bg-[var(--surface)] px-6 py-5 text-sm text-[var(--text-muted)] glow-ring">
               <span className="font-semibold text-[var(--text)]">Staff member?</span>{' '}
               Log in with your employee or student ID to apply a 20% discount.
             </div>
@@ -355,9 +355,9 @@ export default function App() {
               {pricingPlans.map((plan) => (
                 <div
                   key={plan.name}
-                  className={`relative flex h-full flex-col rounded-2xl border bg-[var(--surface)] p-7 text-left transition hover:-translate-y-2 ${
+                  className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-[var(--surface)] p-7 text-left transition hover:-translate-y-2 card-sheen ${
                     plan.featured
-                      ? 'border-[var(--accent)] bg-[var(--surface-strong)]'
+                      ? 'border-[var(--accent)] bg-[var(--surface-strong)] glow-ring'
                       : 'border-[var(--border)]'
                   }`}
                 >
