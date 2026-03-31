@@ -3,7 +3,7 @@ function SocialIcon({ path, label }) {
     <a
       href="#"
       aria-label={label}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/70 transition hover:border-[#51CCF9] hover:text-[#51CCF9]"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
     >
       <svg
         viewBox="0 0 24 24"
@@ -22,13 +22,13 @@ function SocialIcon({ path, label }) {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-[#0b0f14]">
+    <footer className="border-t border-[var(--border)] bg-[var(--bg)]">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-16 md:flex-row md:items-center md:justify-between md:px-8">
         <div>
-          <p className="font-display text-2xl font-semibold tracking-wide text-white">
-            <span className="text-[#51CCF9]">DBU</span>GYM
+          <p className="font-display text-2xl font-semibold tracking-wide text-[var(--text)]">
+            <span className="text-[var(--accent)]">DBU</span>GYM
           </p>
-          <p className="mt-3 max-w-sm text-sm text-white/60">
+          <p className="mt-3 max-w-sm text-sm text-[var(--text-muted)]">
             Making the world stronger, one rep at a time. Come for the
             equipment, stay for the community.
           </p>
@@ -48,7 +48,7 @@ export default function Footer() {
           />
         </div>
       </div>
-      <div className="border-t border-white/10 py-6 text-center text-xs text-white/40">
+      <div className="border-t border-[var(--border)] py-6 text-center text-xs text-[var(--text-soft)]">
         © 2025 Dbu-Gym. All rights reserved.
       </div>
     </footer>
