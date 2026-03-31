@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 function DumbbellIcon({ className }) {
   return (
     <svg
@@ -80,14 +82,14 @@ export default function Header({ theme, onToggleTheme, toggleLabel }) {
   return (
     <header className="fixed inset-x-0 top-0 z-20 border-b border-white/10 bg-black/70 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-4 md:px-8">
-        <a href="#home" className="flex items-center gap-3 text-lg font-semibold">
+        <Link to="/" className="flex items-center gap-3 text-lg font-semibold">
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--accent)] glow-ring">
             <DumbbellIcon className="h-8 w-8" />
           </span>
           <span className="font-display text-4xl tracking-wide text-white md:text-5xl">
             <span className="text-[var(--accent)]">DBU</span>GYM
           </span>
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
           <NavLink href="#home">Home</NavLink>
@@ -113,12 +115,12 @@ export default function Header({ theme, onToggleTheme, toggleLabel }) {
               {theme === 'dark' ? 'Light' : 'Dark'}
             </span>
           </button>
-          <a
-            href="#pricing"
+          <Link
+            to="/login"
             className="hidden rounded-full border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent)] hover:text-black sm:inline-flex"
           >
             Login / Register
-          </a>
+          </Link>
         </div>
       </div>
     </header>
