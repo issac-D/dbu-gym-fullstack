@@ -56,6 +56,63 @@ body {
   letter-spacing: 0.04em;
 }
 
+.hero-dark {
+  color: #f8fafc;
+}
+
+.hero-dark .hero-pill {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(15, 23, 42, 0.45);
+  color: rgba(248, 250, 252, 0.85);
+}
+
+.hero-dark .hero-title {
+  color: #f8fafc;
+}
+
+.hero-dark .hero-subtitle {
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.hero-dark .hero-cta {
+  box-shadow: 0 12px 35px rgba(81, 204, 249, 0.5);
+}
+
+.stat-card {
+  background: linear-gradient(140deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.35));
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 20px 45px -30px rgba(15, 23, 42, 0.9);
+}
+
+.stat-card-icon {
+  background: rgba(81, 204, 249, 0.16);
+  color: #51ccf9;
+  box-shadow: 0 0 20px rgba(81, 204, 249, 0.25);
+}
+
+.pricing-card {
+  min-height: 420px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border);
+  box-shadow: 0 35px 70px -45px rgba(0, 0, 0, 0.85);
+}
+
+.pricing-card.featured {
+  border-color: var(--accent);
+  box-shadow: 0 35px 70px -40px var(--accent-glow);
+}
+
+.pricing-card .price {
+  font-size: 2.6rem;
+  letter-spacing: 0.02em;
+}
+
+.apparatus-icon {
+  background: rgba(81, 204, 249, 0.14);
+  color: var(--accent);
+  box-shadow: 0 0 25px rgba(81, 204, 249, 0.2);
+}
+
 .glass-panel {
   background: linear-gradient(140deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
   border: 1px solid var(--border);
