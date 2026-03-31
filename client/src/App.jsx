@@ -4,6 +4,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import MembersDashboard from './pages/members/dashboard'
+import EditProfile from './pages/members/EditProfile'
 import Register from './pages/Register'
 
 function getInitialTheme() {
@@ -47,6 +48,7 @@ export default function App() {
       <Route path="/forgot" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} />
       <Route path="/members/dashboard" element={<MembersDashboard />} />
+      <Route path="/members/profile" element={<EditProfile />} />
     </Routes>
   )
 }
