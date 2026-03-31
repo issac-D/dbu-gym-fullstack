@@ -1,13 +1,17 @@
 import { Link } from 'react-router-dom'
+import adminLogo from '../assets/admin-logo.png'
 
 export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface-strong)]/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 md:px-8">
-        <Link to="/" className="text-lg font-semibold text-[var(--text)]">
-          <span className="text-[var(--accent)]">DBU</span>-GYM Admin
+        <Link to="/" className="flex items-center gap-3 text-lg font-semibold text-[var(--text)]">
+          <img src={adminLogo} alt="DBU Gym Logo" className="h-9 w-9 rounded-full object-cover" />
+          <span>
+            <span className="text-[var(--accent)]">DBU</span>-GYM Admin
+          </span>
         </Link>
-        <nav className="flex flex-wrap items-center gap-4 text-sm">
+        <nav className="flex flex-wrap items-center gap-6 text-sm">
           <Link className="text-[var(--accent)]" to="/admin/dashboard">
             Dashboard
           </Link>
@@ -35,9 +39,19 @@ export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
               {adminName}
               <span className="text-[var(--text-soft)]">▾</span>
             </summary>
-            <div className="absolute right-0 mt-3 w-52 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-3 shadow-xl">
+            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-3 shadow-xl">
+              <p className="px-3 pb-2 text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
+                Profile
+              </p>
               <Link to="#" className="block rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent)]">
-                Edit Profile
+                Profile Settings
+              </Link>
+              <div className="my-2 border-t border-[var(--border)]"></div>
+              <p className="px-3 pb-2 text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
+                System
+              </p>
+              <Link to="#" className="block rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent)]">
+                System Settings
               </Link>
               <Link
                 to="/login"
