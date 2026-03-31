@@ -11,7 +11,7 @@ export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
           <Link className="text-[var(--accent)]" to="/admin/dashboard">
             Dashboard
           </Link>
-          <Link className="text-[var(--text-muted)]" to="#">
+          <Link className="text-[var(--text-muted)]" to="/admin/approvals">
             Approvals
           </Link>
           <Link className="text-[var(--text-muted)]" to="#member-management">
