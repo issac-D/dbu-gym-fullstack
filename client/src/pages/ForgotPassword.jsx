@@ -43,25 +43,7 @@ function MailIcon({ className }) {
   )
 }
 
-function LockIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="4" y="11" width="16" height="9" rx="2" />
-      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-    </svg>
-  )
-}
-
-export default function Login() {
+export default function ForgotPassword() {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-25" />
@@ -77,9 +59,11 @@ export default function Login() {
               <DumbbellIcon className="h-8 w-8" />
             </Link>
             <h1 className="font-display text-3xl font-semibold text-white">
-              DBU Gym System
+              Reset Your Password
             </h1>
-            <p className="mt-2 text-sm text-white/70">Member & Admin Login</p>
+            <p className="mt-2 text-sm text-white/70">
+              Enter your email and we’ll send reset instructions.
+            </p>
           </div>
 
           <div className="glass-panel rounded-3xl p-6 shadow-2xl md:p-8">
@@ -96,35 +80,18 @@ export default function Login() {
                 </div>
               </label>
 
-              <label className="block text-sm text-white/70">
-                Password
-                <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
-                  <LockIcon className="h-5 w-5 text-[var(--accent)]" />
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
-                  />
-                </div>
-              </label>
-
               <button
                 type="submit"
                 className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)]"
               >
-                Log In
+                Send Reset Link
               </button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-white/60">
-              <Link to="/forgot" className="text-[var(--accent)] hover:underline">
-                Forgot password
-              </Link>
-            </div>
-            <p className="mt-3 text-center text-sm text-white/60">
-              Don&apos;t have an account?{' '}
-              <Link to="/register" className="text-[var(--accent)] hover:underline">
-                Register
+            <p className="mt-6 text-center text-sm text-white/60">
+              Remembered your password?{' '}
+              <Link to="/login" className="text-[var(--accent)] hover:underline">
+                Back to login
               </Link>
             </p>
           </div>
