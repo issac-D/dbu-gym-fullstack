@@ -477,7 +477,11 @@ export default function Register() {
                   onChange={(event) => setTermsAccepted(event.target.checked)}
                   className="h-4 w-4 rounded border-white/30 bg-black/40 text-[var(--accent)]"
                 />
-                I agree to the Terms and Conditions.
+                I agree to the{' '}
+                <Link to="/terms" className="text-[var(--accent)] hover:underline">
+                  terms and conditions
+                </Link>
+                .
               </label>
 
               <button

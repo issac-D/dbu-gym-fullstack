@@ -5,6 +5,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Terms from './pages/Terms'
 import MembersDashboard from './pages/members/dashboard'
 import EditProfile from './pages/members/EditProfile'
 import AdminDashboard from './pages/admin/Dashboard'
@@ -52,6 +53,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/terms" element={<Terms />} />
 
       <Route element={<ProtectedRoute role="member" />}>
         <Route path="/members/dashboard" element={<MembersDashboard />} />
