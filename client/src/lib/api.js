@@ -80,6 +80,12 @@ export async function updateAdminProfile(payload) {
   })
 }
 
+export async function getAdminDashboard() {
+  return request('/api/admin/dashboard', {
+    method: 'GET',
+  })
+}
+
 export async function updateAdminPassword(payload) {
   return request('/api/admin/password', {
     method: 'PUT',

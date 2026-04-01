@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
@@ -24,12 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', function (Request $request) {
-        return response()->json([
-            'message' => 'Admin access granted.',
-            'user' => $request->user(),
-        ]);
-    });
+    Route::get('/dashboard', [AdminDashboardController::class, 'show']);
 
     Route::get('/profile', [AdminProfileController::class, 'show']);
     Route::put('/profile', [AdminProfileController::class, 'update']);

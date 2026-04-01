@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
+import { getAdminDashboard } from '../../lib/api'
 
 const priceMap = {
   Monthly: 300,
@@ -239,6 +240,8 @@ export default function AdminDashboard() {
   const [page, setPage] = useState(1)
   const [showModal, setShowModal] = useState(false)
   const [memberType, setMemberType] = useState('university')
+  const [dashboardStats, setDashboardStats] = useState(null)
+  const [dashboardError, setDashboardError] = useState('')
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -301,6 +304,33 @@ export default function AdminDashboard() {
     )
     return { total, active, expired, uni, ext, revenue }
   }, [enrichedMembers])
+
+  useEffect(() => {
+    let active = true
+
+    const loadStats = async () => {
+      try {
+        const data = await getAdminDashboard()
+        if (!active) return
+        setDashboardStats(data?.data?.stats || null)
+      } catch (err) {
+        if (active) setDashboardError(err?.message || 'Unable to load admin stats.')
+      }
+    }
+
+    loadStats()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const statsView = {
+    total: dashboardStats?.total_members ?? stats.total,
+    active: dashboardStats?.active_members ?? stats.active,
+    pending: dashboardStats?.pending_members ?? 0,
+    revenue: dashboardStats?.total_revenue ?? stats.revenue,
+  }
 
   const chartData = useMemo(() => {
     const labels = Array.from({ length: 6 }, (_, index) => {
@@ -409,11 +439,11 @@ export default function AdminDashboard() {
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {[
-            { label: 'Total Members', value: stats.total },
-            { label: 'Active', value: stats.active },
-            { label: 'Expired', value: stats.expired },
+            { label: 'Total Members', value: statsView.total },
+            { label: 'Active', value: statsView.active },
+            { label: 'Pending', value: statsView.pending },
             { label: 'Uni / Ext', value: `${stats.uni} / ${stats.ext}` },
-            { label: 'Est. Revenue', value: stats.revenue.toLocaleString() },
+            { label: 'Est. Revenue', value: statsView.revenue.toLocaleString() },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -427,9 +457,14 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {stats.expired > 0 ? (
-          <div className="mt-6 rounded-2xl border border-[var(--danger-border)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
-            Attention: {stats.expired} expired members.
+        {dashboardError ? (
+          <div className="mt-6 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            {dashboardError}
+          </div>
+        ) : null}
+        {statsView.pending > 0 ? (
+          <div className="mt-4 rounded-2xl border border-[var(--danger-border)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
+            Attention: {statsView.pending} pending members awaiting approval.
           </div>
         ) : null}
 
@@ -456,15 +491,15 @@ export default function AdminDashboard() {
                 Total Calculated (YTD)
               </p>
               <p className="mt-2 text-lg font-semibold text-[var(--accent)]">
-                {stats.revenue.toLocaleString()} ETB
+                {statsView.revenue.toLocaleString()} ETB
               </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
-                Expired Members (Due)
+                Pending Members
               </p>
-              <p className="mt-2 text-lg font-semibold text-red-200">
-                {stats.expired} Members
+              <p className="mt-2 text-lg font-semibold text-amber-200">
+                {statsView.pending} Members
               </p>
             </div>
             <div>
