@@ -56,6 +56,17 @@ export default function Dashboard() {
   const planInfo = dashboard?.plan || {}
   const resolvedName = memberInfo.name || displayName
 
+  const renewalPlan = renewPlan || planInfo.type || member.planType
+  const priceMap = {
+    Monthly: 300,
+    '3Months': 800,
+    '6Months': 1500,
+    '1Year': 2500,
+  }
+  const basePrice = priceMap[renewalPlan] || 0
+  const isUniversityMember = (memberInfo.member_type || '').toLowerCase() === 'university'
+  const estimatedPrice = isUniversityMember ? Math.round(basePrice * 0.8) : basePrice
+
   const handleRenew = async () => {
     setError('')
     setRenewing(true)
@@ -248,6 +259,12 @@ export default function Dashboard() {
             <p className="mt-2 text-sm text-[var(--text-muted)]">
               Choose a plan to renew your membership.
             </p>
+            <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-sm text-[var(--text-muted)]">
+              Estimated total:{' '}
+              <span className="font-semibold text-[var(--accent)]">
+                {estimatedPrice ? `${estimatedPrice} ETB` : 'Select a plan'}
+              </span>
+            </div>
             <label className="mt-4 block text-sm text-[var(--text-muted)]">
               Plan Duration
               <select
