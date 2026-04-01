@@ -27,6 +27,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [renewing, setRenewing] = useState(false)
+  const [showRenewModal, setShowRenewModal] = useState(false)
+  const [renewPlan, setRenewPlan] = useState('')
 
   useEffect(() => {
     let active = true
@@ -59,9 +61,11 @@ export default function Dashboard() {
     setRenewing(true)
     try {
       const data = await renewMembership({
-        membership_type: planInfo.type || member.planType,
+        membership_type: renewPlan || planInfo.type || member.planType,
       })
       setDashboard(data?.data || dashboard)
+      setShowRenewModal(false)
+      setRenewPlan('')
     } catch (err) {
       setError(err?.message || 'Failed to renew membership.')
     } finally {
@@ -224,11 +228,11 @@ export default function Dashboard() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleRenew}
+                  onClick={() => setShowRenewModal(true)}
                   disabled={renewing}
                   className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text-soft)] transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {renewing ? 'Renewing...' : 'Renew Membership'}
+                  Renew Membership
                 </button>
               </div>
             </section>
@@ -236,6 +240,49 @@ export default function Dashboard() {
         </div>
       </main>
       <Footer />
+
+      {showRenewModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--text)]">Renew Membership</h3>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              Choose a plan to renew your membership.
+            </p>
+            <label className="mt-4 block text-sm text-[var(--text-muted)]">
+              Plan Duration
+              <select
+                value={renewPlan}
+                onChange={(event) => setRenewPlan(event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
+              >
+                <option value="">Keep Current ({planInfo.type || member.planType})</option>
+                <option value="Monthly">Monthly</option>
+                <option value="3Months">3 Months</option>
+                <option value="6Months">6 Months</option>
+                <option value="1Year">1 Year</option>
+              </select>
+            </label>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setShowRenewModal(false)}
+                className="flex-1 rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text-soft)] transition hover:border-[var(--accent)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRenew}
+                disabled={renewing}
+                className="flex-1 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {renewing ? 'Renewing...' : 'Confirm Renewal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
