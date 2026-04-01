@@ -12,6 +12,7 @@ class AdminProfileService
     {
         $user->update([
             'name' => $data['name'],
+            'username' => $data['username'] ?? $user->username,
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
         ]);

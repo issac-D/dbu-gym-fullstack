@@ -56,6 +56,7 @@ export default function AdminProfile() {
             email: user.email || current.email,
             role: user.role === 'admin' ? 'System Admin' : current.role,
             phone: user.phone || current.phone,
+            username: user.username || current.username,
           }))
           if (user.avatar_url) setAvatarUrl(user.avatar_url)
         }
@@ -144,6 +145,7 @@ export default function AdminProfile() {
     try {
       const data = await updateAdminProfile({
         name: formValues.name.trim(),
+        username: formValues.username.trim() || null,
         email: formValues.email.trim(),
         email_confirmation: formValues.email_confirmation.trim(),
         phone: formValues.phone.trim() || null,
@@ -155,6 +157,7 @@ export default function AdminProfile() {
           name: user.name || current.name,
           email: user.email || current.email,
           phone: user.phone || current.phone,
+          username: user.username || current.username,
         }))
       }
       setSuccess(data?.message || 'Profile updated.')

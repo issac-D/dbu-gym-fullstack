@@ -17,6 +17,7 @@ class UpdateProfileRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['nullable', 'string', 'max:60'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $userId],
             'email_confirmation' => ['required', 'same:email'],
             'phone' => ['nullable', 'string', 'max:30'],
