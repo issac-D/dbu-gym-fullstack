@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
-import { getAdminProfile } from '../../lib/api'
+import { getAdminProfile, updateAdminProfile } from '../../lib/api'
 
 const fallbackProfile = {
   name: 'Admin Dawit',
@@ -20,6 +20,14 @@ export default function AdminProfile() {
   const [adminProfile, setAdminProfile] = useState(fallbackProfile)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [formValues, setFormValues] = useState({
+    name: fallbackProfile.name,
+    username: fallbackProfile.username,
+    email: fallbackProfile.email,
+    phone: fallbackProfile.phone,
+  })
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -53,6 +61,14 @@ export default function AdminProfile() {
     }
   }, [previewUrl])
 
+  useEffect(() => {
+    setFormValues((current) => ({
+      ...current,
+      name: adminProfile.name,
+      email: adminProfile.email,
+    }))
+  }, [adminProfile])
+
   const handleToggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
     setTheme(next)
@@ -77,6 +93,41 @@ export default function AdminProfile() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl('')
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setFormValues((current) => ({
+      ...current,
+      [name]: value,
+    }))
+  }
+
+  const handleSaveProfile = async (event) => {
+    event.preventDefault()
+    setError('')
+    setSuccess('')
+    setSaving(true)
+
+    try {
+      const data = await updateAdminProfile({
+        name: formValues.name.trim(),
+        email: formValues.email.trim(),
+      })
+      const user = data?.user
+      if (user) {
+        setAdminProfile((current) => ({
+          ...current,
+          name: user.name || current.name,
+          email: user.email || current.email,
+        }))
+      }
+      setSuccess(data?.message || 'Profile updated.')
+    } catch (err) {
+      setError(err?.message || 'Failed to update profile.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -149,14 +200,19 @@ export default function AdminProfile() {
           </section>
 
           <section className="space-y-6">
-            <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+            <form
+              onSubmit={handleSaveProfile}
+              className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6"
+            >
               <h2 className="text-lg font-semibold">Profile Information</h2>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-[var(--text-muted)]">
                   Full Name
                   <input
                     type="text"
-                    defaultValue={adminProfile.name}
+                    name="name"
+                    value={formValues.name}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -164,7 +220,9 @@ export default function AdminProfile() {
                   Username
                   <input
                     type="text"
-                    defaultValue={adminProfile.username}
+                    name="username"
+                    value={formValues.username}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -172,7 +230,9 @@ export default function AdminProfile() {
                   Email
                   <input
                     type="email"
-                    defaultValue={adminProfile.email}
+                    name="email"
+                    value={formValues.email}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -180,7 +240,9 @@ export default function AdminProfile() {
                   Phone Number
                   <input
                     type="tel"
-                    defaultValue={adminProfile.phone}
+                    name="phone"
+                    value={formValues.phone}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -203,10 +265,24 @@ export default function AdminProfile() {
                   />
                 </label>
               </div>
-              <button className="mt-6 w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[var(--accent-strong)]">
-                Save Profile Changes
+              {success ? (
+                <div className="mt-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                  {success}
+                </div>
+              ) : null}
+              {error ? (
+                <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                  {error}
+                </div>
+              ) : null}
+              <button
+                type="submit"
+                disabled={saving}
+                className="mt-6 w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {saving ? 'Saving...' : 'Save Profile Changes'}
               </button>
-            </div>
+            </form>
 
             <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
               <h2 className="text-lg font-semibold">Change Password</h2>
