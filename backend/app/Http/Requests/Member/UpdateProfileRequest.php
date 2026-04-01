@@ -23,6 +23,7 @@ class UpdateProfileRequest extends FormRequest
             'department' => ['nullable', 'string', 'max:100'],
             'university_id' => ['nullable', 'string', 'max:50'],
             'membership_type' => ['nullable', 'string', 'max:50'],
+            'membership_plan' => ['nullable', 'string', 'max:50'],
             'member_id' => ['nullable', 'string', 'max:50'],
         ];
     }

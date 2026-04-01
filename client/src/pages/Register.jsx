@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
+import { uploadMemberAvatar } from '../lib/api'
 
 function DumbbellIcon({ className }) {
   return (
@@ -86,17 +87,91 @@ export default function Register() {
   const { register } = useAuth()
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [memberType, setMemberType] = useState('university')
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [formValues, setFormValues] = useState({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    phone: '',
+    gender: '',
+    membership_type: '',
+    university_id: '',
+    department: '',
+    national_id: '',
+    address: '',
+  })
+
+  const isUniversity = memberType === 'university'
+  const submitLabel = useMemo(() => (submitting ? 'Submitting…' : 'Proceed to Payment'), [submitting])
+  const previewMemberId = useMemo(() => {
+    const prefix = isUniversity ? 'DBU' : 'EXT'
+    const year = new Date().getFullYear()
+    const seq = String(Math.floor(Math.random() * 9000) + 1000)
+    return `${prefix}-${year}-${seq}`
+  }, [isUniversity])
+
+  const estimatedTotal = useMemo(() => {
+    const prices = {
+      Monthly: 300,
+      '3Months': 800,
+      '6Months': 1500,
+      '1Year': 2500,
+    }
+    const base = prices[formValues.membership_type] || 0
+    return isUniversity ? Math.round(base * 0.8) : base
+  }, [formValues.membership_type, isUniversity])
+
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setFormValues((current) => ({
+      ...current,
+      [name]: value,
+    }))
+  }
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0]
+    setAvatarFile(file || null)
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    const form = event.currentTarget
-    const name = form.elements.name?.value?.trim()
-    const email = form.elements.email?.value?.trim()
-    const password = form.elements.password?.value
-    const passwordConfirmation = form.elements.password_confirmation?.value
+    const payload = {
+      ...formValues,
+      member_type: memberType,
+      terms_accepted: termsAccepted,
+    }
 
-    if (!name || !email || !password || !passwordConfirmation) {
-      setError('Please complete all fields.')
+    if (!payload.name || !payload.email || !payload.password || !payload.password_confirmation) {
+      setError('Please complete all required fields.')
+      return
+    }
+
+    if (!payload.phone || !payload.gender || !payload.membership_type) {
+      setError('Please complete all required fields.')
+      return
+    }
+
+    if (isUniversity && (!payload.university_id || !payload.department)) {
+      setError('Please enter your university ID and department.')
+      return
+    }
+
+    if (!isUniversity && (!payload.national_id || !payload.address)) {
+      setError('Please enter your national ID and address.')
+      return
+    }
+
+    if (payload.password !== payload.password_confirmation) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    if (!payload.terms_accepted) {
+      setError('Please accept the terms and conditions.')
       return
     }
 
@@ -105,11 +180,12 @@ export default function Register() {
 
     try {
       await register({
-        name,
-        email,
-        password,
-        password_confirmation: passwordConfirmation,
+        ...payload,
+        membership_plan: payload.membership_type,
       })
+      if (avatarFile) {
+        await uploadMemberAvatar(avatarFile)
+      }
       navigate('/members/dashboard')
     } catch (err) {
       setError(err?.message || 'Registration failed. Please try again.')
@@ -140,6 +216,46 @@ export default function Register() {
 
           <div className="glass-panel rounded-3xl p-6 shadow-2xl md:p-8">
             <form className="space-y-5" onSubmit={handleSubmit}>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.3em] text-white/50">Gym Member ID</div>
+                    <div className="mt-1 text-sm font-semibold text-white">{previewMemberId}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[11px] uppercase tracking-[0.3em] text-white/50">Estimated Total</div>
+                    <div className="mt-1 text-sm font-semibold text-[var(--accent)]">{estimatedTotal} ETB</div>
+                  </div>
+                </div>
+                <p className="mt-2 text-[11px] text-white/50">
+                  Final member ID is generated after registration.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMemberType('university')}
+                  className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                    isUniversity
+                      ? 'bg-[var(--accent)] text-black'
+                      : 'border border-white/20 text-white/80'
+                  }`}
+                >
+                  University Member
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMemberType('external')}
+                  className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                    !isUniversity
+                      ? 'bg-[var(--accent)] text-black'
+                      : 'border border-white/20 text-white/80'
+                  }`}
+                >
+                  External Member
+                </button>
+              </div>
+
               <label className="block text-sm text-white/70">
                 Full Name
                 <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
@@ -147,6 +263,8 @@ export default function Register() {
                   <input
                     type="text"
                     name="name"
+                    value={formValues.name}
+                    onChange={handleChange}
                     placeholder="Your name"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
@@ -160,36 +278,154 @@ export default function Register() {
                   <input
                     type="email"
                     name="email"
+                    value={formValues.email}
+                    onChange={handleChange}
                     placeholder="you@example.com"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
                 </div>
               </label>
 
-              <label className="block text-sm text-white/70">
-                Password
-                <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
-                  <LockIcon className="h-5 w-5 text-[var(--accent)]" />
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block text-sm text-white/70">
+                  Password
+                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                    <LockIcon className="h-5 w-5 text-[var(--accent)]" />
+                    <input
+                      type="password"
+                      name="password"
+                      value={formValues.password}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </div>
+                </label>
+                <label className="block text-sm text-white/70">
+                  Confirm Password
+                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                    <LockIcon className="h-5 w-5 text-[var(--accent)]" />
+                    <input
+                      type="password"
+                      name="password_confirmation"
+                      value={formValues.password_confirmation}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </div>
+                </label>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block text-sm text-white/70">
+                  Phone Number
                   <input
-                    type="password"
-                    name="password"
-                    placeholder="••••••••"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    type="tel"
+                    name="phone"
+                    value={formValues.phone}
+                    onChange={handleChange}
+                    placeholder="09... or +251..."
+                    className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
-                </div>
-              </label>
+                </label>
+                <label className="block text-sm text-white/70">
+                  Gender
+                  <select
+                    name="gender"
+                    value={formValues.gender}
+                    onChange={handleChange}
+                    className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white focus:outline-none"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </label>
+              </div>
 
               <label className="block text-sm text-white/70">
-                Confirm Password
-                <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
-                  <LockIcon className="h-5 w-5 text-[var(--accent)]" />
-                  <input
-                    type="password"
-                    name="password_confirmation"
-                    placeholder="••••••••"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
-                  />
+                Membership Plan
+                <select
+                  name="membership_type"
+                  value={formValues.membership_type}
+                  onChange={handleChange}
+                  className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white focus:outline-none"
+                >
+                  <option value="">Select Plan Duration</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="3Months">3 Months</option>
+                  <option value="6Months">6 Months</option>
+                  <option value="1Year">1 Year</option>
+                </select>
+              </label>
+
+              {isUniversity ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block text-sm text-white/70">
+                    University ID
+                    <input
+                      type="text"
+                      name="university_id"
+                      value={formValues.university_id}
+                      onChange={handleChange}
+                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </label>
+                  <label className="block text-sm text-white/70">
+                    Department/College
+                    <input
+                      type="text"
+                      name="department"
+                      value={formValues.department}
+                      onChange={handleChange}
+                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </label>
                 </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block text-sm text-white/70">
+                    National ID / Passport
+                    <input
+                      type="text"
+                      name="national_id"
+                      value={formValues.national_id}
+                      onChange={handleChange}
+                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </label>
+                  <label className="block text-sm text-white/70">
+                    Address
+                    <input
+                      type="text"
+                      name="address"
+                      value={formValues.address}
+                      onChange={handleChange}
+                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </label>
+                </div>
+              )}
+
+              <label className="block text-sm text-white/70">
+                Profile Picture
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-[var(--accent)] file:px-3 file:py-1 file:text-xs file:font-semibold file:text-black"
+                />
+              </label>
+
+              <label className="flex items-center gap-2 text-xs text-white/70">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(event) => setTermsAccepted(event.target.checked)}
+                  className="h-4 w-4 rounded border-white/30 bg-black/40 text-[var(--accent)]"
+                />
+                I agree to the Terms and Conditions.
               </label>
 
               <button
@@ -197,7 +433,7 @@ export default function Register() {
                 disabled={submitting}
                 className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {submitting ? 'Creating…' : 'Create Account'}
+                {submitLabel}
               </button>
             </form>
 

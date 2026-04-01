@@ -17,6 +17,7 @@ class MemberProfileService
             'department' => $data['department'] ?? $user->department,
             'university_id' => $data['university_id'] ?? $user->university_id,
             'membership_type' => $data['membership_type'] ?? $user->membership_type,
+            'membership_plan' => $data['membership_plan'] ?? $user->membership_plan,
             'member_id' => $data['member_id'] ?? $user->member_id,
         ]);
 
