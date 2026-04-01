@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
+import { getAdminProfile } from '../../lib/api'
 
-const adminProfile = {
+const fallbackProfile = {
   name: 'Admin Dawit',
   adminId: 'ADM-1001',
   role: 'System Admin',
@@ -16,10 +17,38 @@ export default function AdminProfile() {
     document.documentElement.dataset.theme || 'dark'
   )
   const [previewUrl, setPreviewUrl] = useState('')
+  const [adminProfile, setAdminProfile] = useState(fallbackProfile)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const fileInputRef = useRef(null)
 
   useEffect(() => {
+    let active = true
+
+    const loadProfile = async () => {
+      try {
+        const data = await getAdminProfile()
+        if (!active) return
+        const user = data?.user
+        if (user) {
+          setAdminProfile((current) => ({
+            ...current,
+            name: user.name || current.name,
+            email: user.email || current.email,
+            role: user.role === 'admin' ? 'System Admin' : current.role,
+          }))
+        }
+      } catch (err) {
+        if (active) setError(err?.message || 'Unable to load admin profile.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    loadProfile()
+
     return () => {
+      active = false
       if (previewUrl) URL.revokeObjectURL(previewUrl)
     }
   }, [previewUrl])
@@ -63,6 +92,16 @@ export default function AdminProfile() {
         <p className="mt-2 text-sm text-[var(--text-muted)]">
           Update your admin details and system access preferences.
         </p>
+        {loading ? (
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+            Loading admin profile...
+          </div>
+        ) : null}
+        {error ? (
+          <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            {error}
+          </div>
+        ) : null}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_2fr]">
           <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center">

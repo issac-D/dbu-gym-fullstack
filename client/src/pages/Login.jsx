@@ -159,13 +159,13 @@ export default function Login() {
               </div>
             ) : null}
 
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
-              Demo member: <span className="text-[var(--accent)]">member@dbugym.com</span>{' '}
-              / <span className="text-[var(--accent)]">Dbu@1234</span>
-              <br />
-              Demo admin: <span className="text-[var(--accent)]">admin@dbugym.com</span>{' '}
-              / <span className="text-[var(--accent)]">Admin@1234</span>
-            </div>
+    <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
+      Demo member: <span className="text-[var(--accent)]">member@dbugym.com</span>{' '}
+      / <span className="text-[var(--accent)]">Dbu@1234</span>
+      <br />
+      Admin login: <span className="text-[var(--accent)]">admin@gmail.com</span>{' '}
+      / <span className="text-[var(--accent)]">12345678</span>
+    </div>
 
             <div className="mt-6 text-center text-sm text-white/60">
               <Link to="/forgot" className="text-[var(--accent)] hover:underline">

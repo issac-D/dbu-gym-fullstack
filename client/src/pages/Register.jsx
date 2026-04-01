@@ -109,7 +109,6 @@ export default function Register() {
         email,
         password,
         password_confirmation: passwordConfirmation,
-        role: 'member',
       })
       navigate('/members/dashboard')
     } catch (err) {

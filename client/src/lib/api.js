@@ -66,3 +66,16 @@ export async function me() {
     method: 'GET',
   })
 }
+
+export async function getAdminProfile() {
+  return request('/api/admin/profile', {
+    method: 'GET',
+  })
+}
+
+export async function updateAdminProfile(payload) {
+  return request('/api/admin/profile', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
