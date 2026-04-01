@@ -103,6 +103,8 @@ export default function Register() {
     national_id: '',
     address: '',
   })
+  const [phoneError, setPhoneError] = useState('')
+  const [passwordTouched, setPasswordTouched] = useState(false)
 
   const isUniversity = memberType === 'university'
   const submitLabel = useMemo(() => (submitting ? 'Submitting…' : 'Proceed to Payment'), [submitting])
@@ -126,11 +128,35 @@ export default function Register() {
 
   const handleChange = (event) => {
     const { name, value } = event.target
+    if (name === 'phone') {
+      const sanitized = value.replace(/[^0-9+]/g, '')
+      setFormValues((current) => ({
+        ...current,
+        phone: sanitized,
+      }))
+      setPhoneError(getPhoneError(sanitized))
+      return
+    }
     setFormValues((current) => ({
       ...current,
       [name]: value,
     }))
   }
+
+  const getPhoneError = (value) => {
+    if (!value) return ''
+    if (value.startsWith('+2519') || value.startsWith('+2517')) {
+      return value.length === 13 ? '' : 'Use +2519/+2517 followed by 9 digits.'
+    }
+    if (value.startsWith('09') || value.startsWith('07')) {
+      return value.length === 10 ? '' : 'Use 09/07 followed by 8 digits.'
+    }
+    return 'Start with +2519, +2517, 09, or 07.'
+  }
+
+  const hasMinLength = formValues.password.length >= 8
+  const hasNumberOrSymbol = /[0-9]/.test(formValues.password) && /[!@#$%^&*]/.test(formValues.password)
+  const passwordStrong = hasMinLength && hasNumberOrSymbol
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0]
@@ -155,6 +181,11 @@ export default function Register() {
       return
     }
 
+    if (getPhoneError(payload.phone)) {
+      setError('Please enter a valid phone number.')
+      return
+    }
+
     if (isUniversity && (!payload.university_id || !payload.department)) {
       setError('Please enter your university ID and department.')
       return
@@ -162,6 +193,11 @@ export default function Register() {
 
     if (!isUniversity && (!payload.national_id || !payload.address)) {
       setError('Please enter your national ID and address.')
+      return
+    }
+
+    if (!passwordStrong) {
+      setError('Password must be at least 8 characters and include a number & symbol.')
       return
     }
 
@@ -200,7 +236,7 @@ export default function Register() {
       <div className="absolute inset-0 bg-black/70" />
 
       <main className="relative z-10 flex min-h-screen items-center justify-center px-6 py-16">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-4xl">
           <div className="mb-6 text-center">
             <Link
               to="/"
@@ -256,35 +292,37 @@ export default function Register() {
                 </button>
               </div>
 
-              <label className="block text-sm text-white/70">
-                Full Name
-                <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
-                  <UserIcon className="h-5 w-5 text-[var(--accent)]" />
-                  <input
-                    type="text"
-                    name="name"
-                    value={formValues.name}
-                    onChange={handleChange}
-                    placeholder="Your name"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
-                  />
-                </div>
-              </label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block text-sm text-white/70">
+                  Full Name
+                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                    <UserIcon className="h-5 w-5 text-[var(--accent)]" />
+                    <input
+                      type="text"
+                      name="name"
+                      value={formValues.name}
+                      onChange={handleChange}
+                      placeholder="Your name"
+                      className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </div>
+                </label>
 
-              <label className="block text-sm text-white/70">
-                Email Address
-                <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
-                  <MailIcon className="h-5 w-5 text-[var(--accent)]" />
-                  <input
-                    type="email"
-                    name="email"
-                    value={formValues.email}
-                    onChange={handleChange}
-                    placeholder="you@example.com"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
-                  />
-                </div>
-              </label>
+                <label className="block text-sm text-white/70">
+                  Email Address
+                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                    <MailIcon className="h-5 w-5 text-[var(--accent)]" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formValues.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </div>
+                </label>
+              </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block text-sm text-white/70">
@@ -295,10 +333,21 @@ export default function Register() {
                       type="password"
                       name="password"
                       value={formValues.password}
-                      onChange={handleChange}
+                      onChange={(event) => {
+                        setPasswordTouched(true)
+                        handleChange(event)
+                      }}
                       placeholder="••••••••"
                       className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                     />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                    <span className={`flex items-center gap-1 ${hasMinLength ? 'text-emerald-300' : 'text-red-300'}`}>
+                      <span className="h-2 w-2 rounded-full bg-current"></span> 8+ chars
+                    </span>
+                    <span className={`flex items-center gap-1 ${hasNumberOrSymbol ? 'text-emerald-300' : 'text-red-300'}`}>
+                      <span className="h-2 w-2 rounded-full bg-current"></span> Number & symbol
+                    </span>
                   </div>
                 </label>
                 <label className="block text-sm text-white/70">
@@ -328,6 +377,9 @@ export default function Register() {
                     placeholder="09... or +251..."
                     className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
+                  {phoneError ? (
+                    <span className="mt-2 block text-xs text-red-300">{phoneError}</span>
+                  ) : null}
                 </label>
                 <label className="block text-sm text-white/70">
                   Gender
