@@ -18,3 +18,12 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', function (Request $request) {
+        return response()->json([
+            'message' => 'Admin access granted.',
+            'user' => $request->user(),
+        ]);
+    });
+});

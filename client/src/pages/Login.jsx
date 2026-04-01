@@ -85,7 +85,7 @@ export default function Login() {
 
     try {
       const user = await login({ email, password })
-      const resolvedRole = user?.email === 'admin@dbugym.com' ? 'admin' : 'member'
+      const resolvedRole = user?.role === 'admin' ? 'admin' : 'member'
       navigate(resolvedRole === 'admin' ? '/admin/dashboard' : '/members/dashboard')
     } catch (err) {
       setError(err?.message || 'Login failed. Please try again.')

@@ -29,8 +29,8 @@ export function AuthProvider({ children }) {
   }, [])
 
   const role = useMemo(() => {
-    if (!user?.email) return null
-    return user.email === 'admin@dbugym.com' ? 'admin' : 'member'
+    if (!user?.role) return null
+    return user.role
   }, [user])
 
   const login = async (payload) => {
