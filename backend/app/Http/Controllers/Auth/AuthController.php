@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Models\User;
 use App\Services\Auth\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,9 +18,18 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = $this->authService->register($request->validated());
+        $payload = $request->validated();
+
+        if (User::query()->where('email', $payload['email'])->exists()) {
+            return response()->json([
+                'message' => 'User already exists.',
+            ], 409);
+        }
+
+        $user = $this->authService->register($payload);
 
         return response()->json([
+            'message' => 'Registration successful!',
             'user' => $user,
         ], 201);
     }
@@ -31,12 +41,13 @@ class AuthController extends Controller
         if (!$this->authService->attemptLogin($request, $credentials)) {
             return response()->json([
                 'message' => 'Invalid credentials.',
-            ], 422);
+            ], 401);
         }
 
         $request->session()->regenerate();
 
         return response()->json([
+            'message' => 'Login successful!',
             'user' => $request->user(),
         ]);
     }

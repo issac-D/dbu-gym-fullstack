@@ -15,6 +15,7 @@ async function request(path, options = {}) {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
       ...(xsrfToken ? { 'X-XSRF-TOKEN': xsrfToken } : {}),
       'X-Requested-With': 'XMLHttpRequest',
       ...(options.headers || {}),

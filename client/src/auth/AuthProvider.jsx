@@ -11,15 +11,6 @@ export function AuthProvider({ children }) {
     let active = true
 
     const loadUser = async () => {
-      const shouldCheck = localStorage.getItem('dbu_auth') === 'true'
-      if (!shouldCheck) {
-        if (active) {
-          setUser(null)
-          setLoading(false)
-        }
-        return
-      }
-
       try {
         const data = await apiMe()
         if (active) setUser(data.user)
@@ -45,21 +36,18 @@ export function AuthProvider({ children }) {
   const login = async (payload) => {
     const data = await apiLogin(payload)
     setUser(data.user)
-    localStorage.setItem('dbu_auth', 'true')
     return data.user
   }
 
   const register = async (payload) => {
     const data = await apiRegister(payload)
     setUser(data.user)
-    localStorage.setItem('dbu_auth', 'true')
     return data.user
   }
 
   const logout = async () => {
     await apiLogout()
     setUser(null)
-    localStorage.setItem('dbu_auth', 'false')
   }
 
   const value = useMemo(
