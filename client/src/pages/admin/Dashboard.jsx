@@ -120,13 +120,15 @@ function getMembershipCost(member) {
   return member.isUniversityMember ? base * 0.8 : base
 }
 
-function LineChart({ labels, joined, expired }) {
+function LineChart({ labels, joined, expired, pending }) {
   const max = Math.max(...joined, ...expired, 1)
+  const pendingMax = pending?.length ? Math.max(max, ...pending) : max
+  const safeMax = Math.max(pendingMax, 1)
   const points = (data) =>
     data
       .map((value, index) => {
         const x = 8 + (index / (data.length - 1 || 1)) * 84
-        const y = 8 + (1 - value / max) * 78
+        const y = 8 + (1 - value / safeMax) * 78
         return `${x},${y}`
       })
       .join(' ')
@@ -158,7 +160,7 @@ function LineChart({ labels, joined, expired }) {
           fontSize="4"
           fill="var(--text-soft)"
         >
-          {Math.round((1 - line / 100) * max)}
+          {Math.round((1 - line / 100) * safeMax)}
         </text>
         )
       })}
@@ -174,6 +176,41 @@ function LineChart({ labels, joined, expired }) {
         strokeWidth="3"
         points={points(expired)}
       />
+      {pending?.length ? (
+        <polyline
+          fill="none"
+          stroke="#f59e0b"
+          strokeWidth="3"
+          points={points(pending)}
+        />
+      ) : null}
+      {joined.map((value, index) => {
+        const x = 8 + (index / (joined.length - 1 || 1)) * 84
+        const y = 8 + (1 - value / safeMax) * 78
+        return (
+          <circle key={`joined-${index}`} cx={x} cy={y} r="1.6" fill="var(--accent)">
+            <title>{`${labels[index]} • Joined: ${value}`}</title>
+          </circle>
+        )
+      })}
+      {expired.map((value, index) => {
+        const x = 8 + (index / (expired.length - 1 || 1)) * 84
+        const y = 8 + (1 - value / safeMax) * 78
+        return (
+          <circle key={`expired-${index}`} cx={x} cy={y} r="1.6" fill="#ef4444">
+            <title>{`${labels[index]} • Expired: ${value}`}</title>
+          </circle>
+        )
+      })}
+      {pending?.map((value, index) => {
+        const x = 8 + (index / (pending.length - 1 || 1)) * 84
+        const y = 8 + (1 - value / safeMax) * 78
+        return (
+          <circle key={`pending-${index}`} cx={x} cy={y} r="1.6" fill="#f59e0b">
+            <title>{`${labels[index]} • Pending: ${value}`}</title>
+          </circle>
+        )
+      })}
       {labels.map((label, index) => (
         <text
           key={label}
@@ -340,6 +377,7 @@ export default function AdminDashboard() {
         labels: dashboardChart.labels,
         joined: dashboardChart.joined || [],
         expired: dashboardChart.expired || [],
+        pending: dashboardChart.pending || [],
       }
     }
     const labels = Array.from({ length: 6 }, (_, index) => {
@@ -358,7 +396,8 @@ export default function AdminDashboard() {
       if (member.computedStatus === 'expired') expired[5] += 1
     })
 
-    return { labels, joined, expired }
+    const pending = Array(6).fill(0)
+    return { labels, joined, expired, pending }
   }, [enrichedMembers])
 
   const handleFilterChange = (setter) => (event) => {
@@ -481,7 +520,23 @@ export default function AdminDashboard() {
           <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
             <h2 className="text-lg font-semibold">Membership Trends (6 Months)</h2>
             <div className="mt-4 h-60">
-              <LineChart labels={chartData.labels} joined={chartData.joined} expired={chartData.expired} />
+              <LineChart
+                labels={chartData.labels}
+                joined={chartData.joined}
+                expired={chartData.expired}
+                pending={chartData.pending}
+              />
+            </div>
+          </div>
+          <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+            <h2 className="text-lg font-semibold">Pending Approvals (6 Months)</h2>
+            <div className="mt-4 h-48">
+              <LineChart
+                labels={chartData.labels}
+                joined={chartData.pending}
+                expired={Array(chartData.pending.length).fill(0)}
+                pending={[]}
+              />
             </div>
           </div>
           <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
