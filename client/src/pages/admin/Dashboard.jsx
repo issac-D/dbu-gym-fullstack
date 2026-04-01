@@ -242,6 +242,7 @@ export default function AdminDashboard() {
   const [memberType, setMemberType] = useState('university')
   const [dashboardStats, setDashboardStats] = useState(null)
   const [dashboardError, setDashboardError] = useState('')
+  const [dashboardChart, setDashboardChart] = useState(null)
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -313,6 +314,7 @@ export default function AdminDashboard() {
         const data = await getAdminDashboard()
         if (!active) return
         setDashboardStats(data?.data?.stats || null)
+        setDashboardChart(data?.data?.chart || null)
       } catch (err) {
         if (active) setDashboardError(err?.message || 'Unable to load admin stats.')
       }
@@ -333,6 +335,13 @@ export default function AdminDashboard() {
   }
 
   const chartData = useMemo(() => {
+    if (dashboardChart?.labels?.length) {
+      return {
+        labels: dashboardChart.labels,
+        joined: dashboardChart.joined || [],
+        expired: dashboardChart.expired || [],
+      }
+    }
     const labels = Array.from({ length: 6 }, (_, index) => {
       const date = new Date()
       date.setMonth(date.getMonth() - (5 - index))
