@@ -114,6 +114,25 @@ export default function Dashboard() {
                   </p>
                   <p className="mt-2 text-lg font-semibold">{resolvedName}</p>
                 </div>
+                <div className="flex items-center gap-3">
+                  {memberInfo.avatar_url || avatarUrl ? (
+                    <img
+                      src={memberInfo.avatar_url || avatarUrl}
+                      alt={resolvedName}
+                      className="h-12 w-12 rounded-full border border-[var(--border)] object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-strong)] text-sm font-semibold text-[var(--text-muted)]">
+                      {resolvedName?.[0] || 'U'}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                      Member Avatar
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--text-muted)]">Profile photo</p>
+                  </div>
+                </div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-soft)]">
                     Gym Member ID
@@ -291,7 +310,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={handleRenew}
-                disabled={renewing}
+                disabled={renewing || !renewalPlan || estimatedPrice === 0}
                 className="flex-1 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {renewing ? 'Renewing...' : 'Confirm Renewal'}
