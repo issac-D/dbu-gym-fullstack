@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Footer from '../../components/Footer'
 import MemberNavbar from '../../components/MemberNavbar'
 import { useAuth } from '../../auth/AuthProvider'
+import { getMemberProfile, updateMemberProfile, updateMemberPassword, uploadMemberAvatar } from '../../lib/api'
 
 const member = {
   name: 'Mekdes Alemu',
@@ -18,9 +19,64 @@ export default function EditProfile() {
   const displayName = user?.name || member.name
   const [previewUrl, setPreviewUrl] = useState('')
   const fileInputRef = useRef(null)
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [formValues, setFormValues] = useState({
+    name: displayName,
+    email: user?.email || member.email,
+    email_confirmation: user?.email || member.email,
+    phone: member.phone,
+    department: member.department,
+    member_id: member.memberId,
+    membership_type: member.membershipType,
+    university_id: member.universityId,
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [passwordValues, setPasswordValues] = useState({
+    current_password: '',
+    password: '',
+    password_confirmation: '',
+  })
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
 
   useEffect(() => {
+    let active = true
+
+    const loadProfile = async () => {
+      try {
+        const data = await getMemberProfile()
+        if (!active) return
+        const fetched = data?.user
+        if (fetched) {
+          setFormValues((current) => ({
+            ...current,
+            name: fetched.name || current.name,
+            email: fetched.email || current.email,
+            email_confirmation: fetched.email || current.email_confirmation,
+            phone: fetched.phone || current.phone,
+            department: fetched.department || current.department,
+            member_id: fetched.member_id || current.member_id,
+            membership_type: fetched.membership_type || current.membership_type,
+            university_id: fetched.university_id || current.university_id,
+          }))
+          if (fetched.avatar_url) setAvatarUrl(fetched.avatar_url)
+        }
+      } catch (err) {
+        if (active) setError(err?.message || 'Unable to load member profile.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    loadProfile()
+
     return () => {
+      active = false
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl)
       }
@@ -31,7 +87,7 @@ export default function EditProfile() {
     fileInputRef.current?.click()
   }
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -41,6 +97,18 @@ export default function EditProfile() {
 
     const nextUrl = URL.createObjectURL(file)
     setPreviewUrl(nextUrl)
+
+    try {
+      setAvatarUploading(true)
+      const data = await uploadMemberAvatar(file)
+      if (data?.avatar_url) {
+        setAvatarUrl(data.avatar_url)
+      }
+    } catch (err) {
+      setError(err?.message || 'Avatar upload failed.')
+    } finally {
+      setAvatarUploading(false)
+    }
   }
 
   const handleRemoveImage = () => {
@@ -53,15 +121,111 @@ export default function EditProfile() {
     }
   }
 
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setFormValues((current) => ({
+      ...current,
+      [name]: value,
+    }))
+  }
+
+  const handleSaveProfile = async (event) => {
+    event.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (formValues.email.trim() !== formValues.email_confirmation.trim()) {
+      setError('Email confirmation does not match.')
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      const data = await updateMemberProfile({
+        name: formValues.name.trim(),
+        email: formValues.email.trim(),
+        email_confirmation: formValues.email_confirmation.trim(),
+        phone: formValues.phone.trim() || null,
+        department: formValues.department.trim() || null,
+        member_id: formValues.member_id || null,
+        membership_type: formValues.membership_type || null,
+        university_id: formValues.university_id || null,
+      })
+      const updated = data?.user
+      if (updated) {
+        setFormValues((current) => ({
+          ...current,
+          name: updated.name || current.name,
+          email: updated.email || current.email,
+          email_confirmation: updated.email || current.email_confirmation,
+          phone: updated.phone || current.phone,
+          department: updated.department || current.department,
+          member_id: updated.member_id || current.member_id,
+          membership_type: updated.membership_type || current.membership_type,
+          university_id: updated.university_id || current.university_id,
+        }))
+      }
+      setSuccess(data?.message || 'Profile updated.')
+    } catch (err) {
+      setError(err?.message || 'Failed to update profile.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handlePasswordChange = (event) => {
+    const { name, value } = event.target
+    setPasswordValues((current) => ({
+      ...current,
+      [name]: value,
+    }))
+  }
+
+  const handleSavePassword = async (event) => {
+    event.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess('')
+    setPasswordSaving(true)
+
+    try {
+      const data = await updateMemberPassword({
+        current_password: passwordValues.current_password,
+        password: passwordValues.password,
+        password_confirmation: passwordValues.password_confirmation,
+      })
+      setPasswordSuccess(data?.message || 'Password updated.')
+      setPasswordValues({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
+      })
+    } catch (err) {
+      setPasswordError(err?.message || 'Failed to update password.')
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      <MemberNavbar memberName={displayName} />
+      <MemberNavbar memberName={displayName} avatarUrl={avatarUrl || user?.avatar_url} />
 
       <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-8">
         <h1 className="text-2xl font-semibold">Edit Profile & Settings</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
           Keep your account details up to date. (Simulation page)
         </p>
+        {loading ? (
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+            Loading member profile...
+          </div>
+        ) : null}
+        {error ? (
+          <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            {error}
+          </div>
+        ) : null}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_2fr]">
           <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center">
@@ -70,6 +234,12 @@ export default function EditProfile() {
                 <img
                   src={previewUrl}
                   alt="Profile preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Profile avatar"
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -92,7 +262,7 @@ export default function EditProfile() {
                 onClick={handlePickImage}
                 className="w-full rounded-full border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black"
               >
-                Update Picture
+                {avatarUploading ? 'Uploading...' : 'Update Picture'}
               </button>
               <button
                 type="button"
@@ -105,14 +275,19 @@ export default function EditProfile() {
           </section>
 
           <section className="space-y-6">
-            <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+            <form
+              onSubmit={handleSaveProfile}
+              className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6"
+            >
               <h2 className="text-lg font-semibold">Personal Information</h2>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-[var(--text-muted)]">
                   Full Name
                   <input
                     type="text"
-                    defaultValue={displayName}
+                    name="name"
+                    value={formValues.name}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -120,7 +295,19 @@ export default function EditProfile() {
                   Email
                   <input
                     type="email"
-                    defaultValue={user?.email || member.email}
+                    name="email"
+                    value={formValues.email}
+                    onChange={handleChange}
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
+                  />
+                </label>
+                <label className="text-sm text-[var(--text-muted)]">
+                  Confirm Email
+                  <input
+                    type="email"
+                    name="email_confirmation"
+                    value={formValues.email_confirmation}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -128,7 +315,9 @@ export default function EditProfile() {
                   Phone Number
                   <input
                     type="tel"
-                    defaultValue={member.phone}
+                    name="phone"
+                    value={formValues.phone}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -137,7 +326,7 @@ export default function EditProfile() {
                   <input
                     type="text"
                     readOnly
-                    defaultValue={member.memberId}
+                    value={formValues.member_id}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-sm text-[var(--text-soft)]"
                   />
                 </label>
@@ -146,7 +335,7 @@ export default function EditProfile() {
                   <input
                     type="text"
                     readOnly
-                    defaultValue={member.membershipType}
+                    value={formValues.membership_type}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-sm text-[var(--text-soft)]"
                   />
                 </label>
@@ -155,7 +344,7 @@ export default function EditProfile() {
                   <input
                     type="text"
                     readOnly
-                    defaultValue={member.universityId}
+                    value={formValues.university_id}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-sm text-[var(--text-soft)]"
                   />
                 </label>
@@ -163,23 +352,45 @@ export default function EditProfile() {
                   Department
                   <input
                     type="text"
-                    defaultValue={member.department}
+                    name="department"
+                    value={formValues.department}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
               </div>
-              <button className="mt-6 w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[var(--accent-strong)]">
-                Save Profile Changes
+              {success ? (
+                <div className="mt-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                  {success}
+                </div>
+              ) : null}
+              {error ? (
+                <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                  {error}
+                </div>
+              ) : null}
+              <button
+                type="submit"
+                disabled={saving}
+                className="mt-6 w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {saving ? 'Saving...' : 'Save Profile Changes'}
               </button>
-            </div>
+            </form>
 
-            <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+            <form
+              onSubmit={handleSavePassword}
+              className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6"
+            >
               <h2 className="text-lg font-semibold">Change Password</h2>
               <div className="mt-4 grid gap-4">
                 <label className="text-sm text-[var(--text-muted)]">
                   Old Password
                   <input
                     type="password"
+                    name="current_password"
+                    value={passwordValues.current_password}
+                    onChange={handlePasswordChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -187,6 +398,9 @@ export default function EditProfile() {
                   New Password
                   <input
                     type="password"
+                    name="password"
+                    value={passwordValues.password}
+                    onChange={handlePasswordChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -194,14 +408,31 @@ export default function EditProfile() {
                   Confirm New Password
                   <input
                     type="password"
+                    name="password_confirmation"
+                    value={passwordValues.password_confirmation}
+                    onChange={handlePasswordChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
               </div>
-              <button className="mt-6 w-full rounded-full border border-[var(--accent)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black">
-                Update Password
+              {passwordSuccess ? (
+                <div className="mt-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                  {passwordSuccess}
+                </div>
+              ) : null}
+              {passwordError ? (
+                <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                  {passwordError}
+                </div>
+              ) : null}
+              <button
+                type="submit"
+                disabled={passwordSaving}
+                className="mt-6 w-full rounded-full border border-[var(--accent)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {passwordSaving ? 'Updating...' : 'Update Password'}
               </button>
-            </div>
+            </form>
           </section>
         </div>
       </main>

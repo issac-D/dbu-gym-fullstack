@@ -79,3 +79,82 @@ export async function updateAdminProfile(payload) {
     body: JSON.stringify(payload),
   })
 }
+
+export async function updateAdminPassword(payload) {
+  return request('/api/admin/password', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function uploadAdminAvatar(file) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  const response = await fetch(`${API_BASE}/api/admin/profile/avatar`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...(getCookie('XSRF-TOKEN')
+        ? { 'X-XSRF-TOKEN': getCookie('XSRF-TOKEN') }
+        : {}),
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    const message = errorBody.message || 'Upload failed'
+    throw new Error(message)
+  }
+
+  return response.json()
+}
+
+export async function getMemberProfile() {
+  return request('/api/member/profile', {
+    method: 'GET',
+  })
+}
+
+export async function updateMemberProfile(payload) {
+  return request('/api/member/profile', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateMemberPassword(payload) {
+  return request('/api/member/password', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function uploadMemberAvatar(file) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  const response = await fetch(`${API_BASE}/api/member/profile/avatar`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...(getCookie('XSRF-TOKEN')
+        ? { 'X-XSRF-TOKEN': getCookie('XSRF-TOKEN') }
+        : {}),
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    const message = errorBody.message || 'Upload failed'
+    throw new Error(message)
+  }
+
+  return response.json()
+}

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Member\ProfileController as MemberProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,42 +29,15 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         ]);
     });
 
-    Route::get('/profile', function (Request $request) {
-        $user = $request->user();
+    Route::get('/profile', [AdminProfileController::class, 'show']);
+    Route::put('/profile', [AdminProfileController::class, 'update']);
+    Route::post('/profile/avatar', [AdminProfileController::class, 'updateAvatar']);
+    Route::put('/password', [AdminProfileController::class, 'updatePassword']);
+});
 
-        return response()->json([
-            'message' => 'Admin profile loaded.',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at,
-            ],
-        ]);
-    });
-
-    Route::put('/profile', function (Request $request) {
-        $user = $request->user();
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-        ]);
-
-        $user->update($validated);
-
-        return response()->json([
-            'message' => 'Admin profile updated.',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at,
-            ],
-        ]);
-    });
+Route::middleware(['auth:sanctum', 'role:member'])->prefix('member')->group(function () {
+    Route::get('/profile', [MemberProfileController::class, 'show']);
+    Route::put('/profile', [MemberProfileController::class, 'update']);
+    Route::post('/profile/avatar', [MemberProfileController::class, 'updateAvatar']);
+    Route::put('/password', [MemberProfileController::class, 'updatePassword']);
 });

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
-import { getAdminProfile, updateAdminProfile } from '../../lib/api'
+import { getAdminProfile, updateAdminProfile, updateAdminPassword, uploadAdminAvatar } from '../../lib/api'
 
 const fallbackProfile = {
   name: 'Admin Dawit',
   adminId: 'ADM-1001',
   role: 'System Admin',
   username: 'admin.dawit',
-  email: 'admin@dbugym.com',
+  email: 'admin@gmail.com',
   phone: '+251 911 222 333',
 }
 
@@ -22,10 +22,21 @@ export default function AdminProfile() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [saving, setSaving] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [passwordValues, setPasswordValues] = useState({
+    current_password: '',
+    password: '',
+    password_confirmation: '',
+  })
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
   const [formValues, setFormValues] = useState({
     name: fallbackProfile.name,
     username: fallbackProfile.username,
     email: fallbackProfile.email,
+    email_confirmation: fallbackProfile.email,
     phone: fallbackProfile.phone,
   })
   const fileInputRef = useRef(null)
@@ -44,7 +55,9 @@ export default function AdminProfile() {
             name: user.name || current.name,
             email: user.email || current.email,
             role: user.role === 'admin' ? 'System Admin' : current.role,
+            phone: user.phone || current.phone,
           }))
+          if (user.avatar_url) setAvatarUrl(user.avatar_url)
         }
       } catch (err) {
         if (active) setError(err?.message || 'Unable to load admin profile.')
@@ -66,6 +79,7 @@ export default function AdminProfile() {
       ...current,
       name: adminProfile.name,
       email: adminProfile.email,
+      email_confirmation: adminProfile.email,
     }))
   }, [adminProfile])
 
@@ -87,6 +101,18 @@ export default function AdminProfile() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     const nextUrl = URL.createObjectURL(file)
     setPreviewUrl(nextUrl)
+
+    try {
+      setAvatarUploading(true)
+      const data = await uploadAdminAvatar(file)
+      if (data?.avatar_url) {
+        setAvatarUrl(data.avatar_url)
+      }
+    } catch (err) {
+      setError(err?.message || 'Avatar upload failed.')
+    } finally {
+      setAvatarUploading(false)
+    }
   }
 
   const handleRemoveImage = () => {
@@ -107,12 +133,20 @@ export default function AdminProfile() {
     event.preventDefault()
     setError('')
     setSuccess('')
+
+    if (formValues.email.trim() !== formValues.email_confirmation.trim()) {
+      setError('Email confirmation does not match.')
+      return
+    }
+
     setSaving(true)
 
     try {
       const data = await updateAdminProfile({
         name: formValues.name.trim(),
         email: formValues.email.trim(),
+        email_confirmation: formValues.email_confirmation.trim(),
+        phone: formValues.phone.trim() || null,
       })
       const user = data?.user
       if (user) {
@@ -120,6 +154,7 @@ export default function AdminProfile() {
           ...current,
           name: user.name || current.name,
           email: user.email || current.email,
+          phone: user.phone || current.phone,
         }))
       }
       setSuccess(data?.message || 'Profile updated.')
@@ -127,6 +162,39 @@ export default function AdminProfile() {
       setError(err?.message || 'Failed to update profile.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handlePasswordChange = (event) => {
+    const { name, value } = event.target
+    setPasswordValues((current) => ({
+      ...current,
+      [name]: value,
+    }))
+  }
+
+  const handleSavePassword = async (event) => {
+    event.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess('')
+    setPasswordSaving(true)
+
+    try {
+      const data = await updateAdminPassword({
+        current_password: passwordValues.current_password,
+        password: passwordValues.password,
+        password_confirmation: passwordValues.password_confirmation,
+      })
+      setPasswordSuccess(data?.message || 'Password updated.')
+      setPasswordValues({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
+      })
+    } catch (err) {
+      setPasswordError(err?.message || 'Failed to update password.')
+    } finally {
+      setPasswordSaving(false)
     }
   }
 
@@ -163,6 +231,12 @@ export default function AdminProfile() {
                   alt="Admin preview"
                   className="h-full w-full object-cover"
                 />
+              ) : avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Admin avatar"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 adminProfile.name
                   .split(' ')
@@ -187,7 +261,7 @@ export default function AdminProfile() {
                 onClick={handlePickImage}
                 className="w-full rounded-full border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black"
               >
-                Update Picture
+                {avatarUploading ? 'Uploading...' : 'Update Picture'}
               </button>
               <button
                 type="button"
@@ -232,6 +306,16 @@ export default function AdminProfile() {
                     type="email"
                     name="email"
                     value={formValues.email}
+                    onChange={handleChange}
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
+                  />
+                </label>
+                <label className="text-sm text-[var(--text-muted)]">
+                  Confirm Email
+                  <input
+                    type="email"
+                    name="email_confirmation"
+                    value={formValues.email_confirmation}
                     onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
@@ -284,13 +368,19 @@ export default function AdminProfile() {
               </button>
             </form>
 
-            <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+            <form
+              onSubmit={handleSavePassword}
+              className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6"
+            >
               <h2 className="text-lg font-semibold">Change Password</h2>
               <div className="mt-4 grid gap-4">
                 <label className="text-sm text-[var(--text-muted)]">
                   Old Password
                   <input
                     type="password"
+                    name="current_password"
+                    value={passwordValues.current_password}
+                    onChange={handlePasswordChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -298,6 +388,9 @@ export default function AdminProfile() {
                   New Password
                   <input
                     type="password"
+                    name="password"
+                    value={passwordValues.password}
+                    onChange={handlePasswordChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -305,14 +398,31 @@ export default function AdminProfile() {
                   Confirm New Password
                   <input
                     type="password"
+                    name="password_confirmation"
+                    value={passwordValues.password_confirmation}
+                    onChange={handlePasswordChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
               </div>
-              <button className="mt-6 w-full rounded-full border border-[var(--accent)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black">
-                Update Password
+              {passwordSuccess ? (
+                <div className="mt-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                  {passwordSuccess}
+                </div>
+              ) : null}
+              {passwordError ? (
+                <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                  {passwordError}
+                </div>
+              ) : null}
+              <button
+                type="submit"
+                disabled={passwordSaving}
+                className="mt-6 w-full rounded-full border border-[var(--accent)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {passwordSaving ? 'Updating...' : 'Update Password'}
               </button>
-            </div>
+            </form>
           </section>
         </div>
       </main>

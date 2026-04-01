@@ -39,7 +39,7 @@ function NavLink({ to, children, active }) {
   )
 }
 
-export default function MemberNavbar({ memberName }) {
+export default function MemberNavbar({ memberName, avatarUrl }) {
   const navigate = useNavigate()
   const { logout } = useAuth()
 
@@ -65,7 +65,17 @@ export default function MemberNavbar({ memberName }) {
 
         <details className="relative">
           <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--accent)]">
-            <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={memberName}
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-400/20 text-xs font-semibold text-emerald-200">
+                {memberName?.[0] || 'U'}
+              </span>
+            )}
             {memberName}
             <svg
               className="h-4 w-4 text-[var(--text-soft)]"
