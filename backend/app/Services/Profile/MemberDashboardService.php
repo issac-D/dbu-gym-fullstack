@@ -11,7 +11,7 @@ class MemberDashboardService
     {
         $remainingDays = null;
         if ($user->plan_expires_at) {
-            $remainingDays = Carbon::now()->diffInDays($user->plan_expires_at, false);
+            $remainingDays = (int) Carbon::now()->diffInDays($user->plan_expires_at, false);
         }
 
         return [

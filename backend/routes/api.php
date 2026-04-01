@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
+use App\Http\Controllers\Member\MembershipController as MemberMembershipController;
 use App\Http\Controllers\Member\ProfileController as MemberProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +39,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 
 Route::middleware(['auth:sanctum', 'role:member'])->prefix('member')->group(function () {
     Route::get('/dashboard', [MemberDashboardController::class, 'show']);
+    Route::post('/renew', [MemberMembershipController::class, 'renew']);
     Route::get('/profile', [MemberProfileController::class, 'show']);
     Route::put('/profile', [MemberProfileController::class, 'update']);
     Route::post('/profile/avatar', [MemberProfileController::class, 'updateAvatar']);

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Footer from '../../components/Footer'
 import MemberNavbar from '../../components/MemberNavbar'
 import { useAuth } from '../../auth/AuthProvider'
-import { getMemberDashboard } from '../../lib/api'
+import { getMemberDashboard, renewMembership } from '../../lib/api'
 
 const member = {
   name: 'Mekdes Alemu',
@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [dashboard, setDashboard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [renewing, setRenewing] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -52,6 +53,21 @@ export default function Dashboard() {
   const memberInfo = dashboard?.member || {}
   const planInfo = dashboard?.plan || {}
   const resolvedName = memberInfo.name || displayName
+
+  const handleRenew = async () => {
+    setError('')
+    setRenewing(true)
+    try {
+      const data = await renewMembership({
+        membership_type: planInfo.type || member.planType,
+      })
+      setDashboard(data?.data || dashboard)
+    } catch (err) {
+      setError(err?.message || 'Failed to renew membership.')
+    } finally {
+      setRenewing(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
@@ -206,8 +222,13 @@ export default function Dashboard() {
                 <button className="rounded-2xl border border-[var(--accent)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent)] hover:text-black">
                   Update Profile
                 </button>
-                <button className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text-soft)] transition hover:border-[var(--accent)]">
-                  Renew Membership
+                <button
+                  type="button"
+                  onClick={handleRenew}
+                  disabled={renewing}
+                  className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text-soft)] transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {renewing ? 'Renewing...' : 'Renew Membership'}
                 </button>
               </div>
             </section>

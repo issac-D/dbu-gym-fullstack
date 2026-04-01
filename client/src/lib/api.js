@@ -139,6 +139,13 @@ export async function getMemberDashboard() {
   })
 }
 
+export async function renewMembership(payload) {
+  return request('/api/member/renew', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function uploadMemberAvatar(file) {
   const formData = new FormData()
   formData.append('avatar', file)
