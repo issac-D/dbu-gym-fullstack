@@ -12,6 +12,10 @@ class AuthService
     public function register(array $data): User
     {
         $memberId = $this->generateMemberId($data['member_type'] ?? null);
+        $plan = $data['membership_type'] ?? null;
+        $planCost = $this->calculatePlanCost($plan, $data['member_type'] ?? null);
+        $planStart = now();
+        $planExpires = $this->calculatePlanExpiry($plan, $planStart);
 
         $user = User::query()->create([
             'name' => $data['name'],
@@ -23,6 +27,11 @@ class AuthService
             'member_type' => $data['member_type'] ?? null,
             'membership_type' => $data['membership_type'] ?? null,
             'membership_plan' => $data['membership_plan'] ?? null,
+            'membership_status' => 'pending',
+            'payment_status' => 'Paid',
+            'plan_start_at' => $planStart,
+            'plan_expires_at' => $planExpires,
+            'plan_cost' => $planCost,
             'university_id' => $data['university_id'] ?? null,
             'department' => $data['department'] ?? null,
             'national_id' => $data['national_id'] ?? null,
@@ -46,6 +55,42 @@ class AuthService
         } while (User::query()->where('member_id', $candidate)->exists());
 
         return $candidate;
+    }
+
+    private function calculatePlanCost(?string $plan, ?string $memberType): ?int
+    {
+        $prices = [
+            'Monthly' => 300,
+            '3Months' => 800,
+            '6Months' => 1500,
+            '1Year' => 2500,
+        ];
+
+        if (!$plan || !isset($prices[$plan])) {
+            return null;
+        }
+
+        $cost = $prices[$plan];
+        if ($memberType === 'university') {
+            $cost = (int) round($cost * 0.8);
+        }
+
+        return $cost;
+    }
+
+    private function calculatePlanExpiry(?string $plan, \Illuminate\Support\Carbon $start): ?\Illuminate\Support\Carbon
+    {
+        if (!$plan) {
+            return null;
+        }
+
+        return match ($plan) {
+            'Monthly' => $start->copy()->addMonth(),
+            '3Months' => $start->copy()->addMonths(3),
+            '6Months' => $start->copy()->addMonths(6),
+            '1Year' => $start->copy()->addYear(),
+            default => null,
+        };
     }
 
     public function attemptLogin(Request $request, array $credentials): bool

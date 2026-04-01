@@ -133,6 +133,12 @@ export async function updateMemberPassword(payload) {
   })
 }
 
+export async function getMemberDashboard() {
+  return request('/api/member/dashboard', {
+    method: 'GET',
+  })
+}
+
 export async function uploadMemberAvatar(file) {
   const formData = new FormData()
   formData.append('avatar', file)

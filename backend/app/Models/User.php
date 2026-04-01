@@ -22,6 +22,11 @@ use Laravel\Sanctum\HasApiTokens;
     'member_id',
     'membership_type',
     'membership_plan',
+    'membership_status',
+    'payment_status',
+    'plan_start_at',
+    'plan_expires_at',
+    'plan_cost',
     'university_id',
     'department',
     'member_type',
@@ -47,6 +52,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'plan_start_at' => 'datetime',
+            'plan_expires_at' => 'datetime',
         ];
     }
 }
