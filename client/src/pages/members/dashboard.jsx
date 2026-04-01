@@ -1,5 +1,6 @@
 import Footer from '../../components/Footer'
 import MemberNavbar from '../../components/MemberNavbar'
+import { useAuth } from '../../auth/AuthProvider'
 
 const member = {
   name: 'Mekdes Alemu',
@@ -17,13 +18,16 @@ const member = {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth()
+  const displayName = user?.name || member.name
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      <MemberNavbar memberName={member.name} />
+      <MemberNavbar memberName={displayName} />
 
       <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-8">
         <h1 className="text-2xl font-semibold">
-          Welcome Back, <span className="text-[var(--accent)]">{member.name}</span>!
+          Welcome Back, <span className="text-[var(--accent)]">{displayName}</span>!
         </h1>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -35,7 +39,7 @@ export default function Dashboard() {
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-soft)]">
                     Full Name
                   </p>
-                  <p className="mt-2 text-lg font-semibold">{member.name}</p>
+                  <p className="mt-2 text-lg font-semibold">{displayName}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-soft)]">

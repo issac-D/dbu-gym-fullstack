@@ -1,10 +1,22 @@
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 
+function getCookie(name) {
+  if (typeof document === 'undefined') return null
+  const value = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`))
+    ?.split('=')[1]
+  return value ? decodeURIComponent(value) : null
+}
+
 async function request(path, options = {}) {
+  const xsrfToken = getCookie('XSRF-TOKEN')
   const response = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...(xsrfToken ? { 'X-XSRF-TOKEN': xsrfToken } : {}),
+      'X-Requested-With': 'XMLHttpRequest',
       ...(options.headers || {}),
     },
     ...options,

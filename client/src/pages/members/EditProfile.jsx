@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Footer from '../../components/Footer'
 import MemberNavbar from '../../components/MemberNavbar'
+import { useAuth } from '../../auth/AuthProvider'
 
 const member = {
   name: 'Mekdes Alemu',
@@ -13,6 +14,8 @@ const member = {
 }
 
 export default function EditProfile() {
+  const { user } = useAuth()
+  const displayName = user?.name || member.name
   const [previewUrl, setPreviewUrl] = useState('')
   const fileInputRef = useRef(null)
 
@@ -52,7 +55,7 @@ export default function EditProfile() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      <MemberNavbar memberName={member.name} />
+      <MemberNavbar memberName={displayName} />
 
       <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-8">
         <h1 className="text-2xl font-semibold">Edit Profile & Settings</h1>
@@ -73,7 +76,7 @@ export default function EditProfile() {
                 'ME'
               )}
             </div>
-            <h2 className="mt-4 text-lg font-semibold">{member.name}</h2>
+            <h2 className="mt-4 text-lg font-semibold">{displayName}</h2>
             <p className="text-xs text-[var(--text-soft)]">ID: {member.memberId}</p>
 
             <div className="mt-6 space-y-3">
@@ -109,7 +112,7 @@ export default function EditProfile() {
                   Full Name
                   <input
                     type="text"
-                    defaultValue={member.name}
+                    defaultValue={displayName}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
@@ -117,7 +120,7 @@ export default function EditProfile() {
                   Email
                   <input
                     type="email"
-                    defaultValue={member.email}
+                    defaultValue={user?.email || member.email}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
