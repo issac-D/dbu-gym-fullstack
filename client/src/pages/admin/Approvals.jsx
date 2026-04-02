@@ -1,40 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
-
-const initialPending = [
-  {
-    id: 'p1',
-    joinDate: '2026-03-20',
-    fullName: 'Selam Tesfaye',
-    email: 'selam@example.com',
-    membershipId: 'DBU-2026-0101',
-    membershipType: 'Monthly',
-    isUniversityMember: true,
-    universityId: 'DBU-2024-7788',
-    nationalId: '',
-    phone: '+251911101010',
-  },
-  {
-    id: 'p2',
-    joinDate: '2026-03-18',
-    fullName: 'Kalkidan Abebe',
-    email: 'kalkidan@example.com',
-    membershipId: 'EXT-2026-0033',
-    membershipType: '3Months',
-    isUniversityMember: false,
-    universityId: '',
-    nationalId: '1234567890123456',
-    phone: '+251911202020',
-  },
-]
+import { approveMember, getAdminApprovals, rejectMember } from '../../lib/api'
 
 export default function Approvals() {
   const [theme, setTheme] = useState(
     document.documentElement.dataset.theme || 'dark'
   )
-  const [pending, setPending] = useState(initialPending)
+  const [pending, setPending] = useState([])
   const [selected, setSelected] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const pendingCount = pending.length
 
@@ -45,16 +21,60 @@ export default function Approvals() {
     window.localStorage.setItem('dbu-theme', next)
   }
 
-  const handleApprove = () => {
+  useEffect(() => {
+    let active = true
+
+    const loadApprovals = async () => {
+      try {
+        const data = await getAdminApprovals()
+        if (!active) return
+        const rows = (data?.data || []).map((user) => ({
+          id: user.id,
+          joinDate: user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A',
+          fullName: user.name,
+          email: user.email,
+          membershipId: user.member_id || 'N/A',
+          membershipType: user.membership_type || 'N/A',
+          isUniversityMember: user.member_type === 'university',
+          universityId: user.university_id || '',
+          nationalId: user.national_id || '',
+          phone: user.phone || '',
+        }))
+        setPending(rows)
+      } catch (err) {
+        if (active) setError(err?.message || 'Unable to load approvals.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    loadApprovals()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const handleApprove = async () => {
     if (!selected) return
-    setPending((prev) => prev.filter((member) => member.id !== selected.id))
-    setSelected(null)
+    try {
+      await approveMember(selected.id)
+      setPending((prev) => prev.filter((member) => member.id !== selected.id))
+      setSelected(null)
+    } catch (err) {
+      setError(err?.message || 'Failed to approve member.')
+    }
   }
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!selected) return
-    setPending((prev) => prev.filter((member) => member.id !== selected.id))
-    setSelected(null)
+    try {
+      await rejectMember(selected.id)
+      setPending((prev) => prev.filter((member) => member.id !== selected.id))
+      setSelected(null)
+    } catch (err) {
+      setError(err?.message || 'Failed to reject member.')
+    }
   }
 
   const proofId = useMemo(() => {
@@ -86,13 +106,44 @@ export default function Approvals() {
             </span>
             <button
               type="button"
-              onClick={() => setPending([...pending])}
+              onClick={() => {
+                setLoading(true)
+                setError('')
+                getAdminApprovals()
+                  .then((data) => {
+                    const rows = (data?.data || []).map((user) => ({
+                      id: user.id,
+                      joinDate: user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A',
+                      fullName: user.name,
+                      email: user.email,
+                      membershipId: user.member_id || 'N/A',
+                      membershipType: user.membership_type || 'N/A',
+                      isUniversityMember: user.member_type === 'university',
+                      universityId: user.university_id || '',
+                      nationalId: user.national_id || '',
+                      phone: user.phone || '',
+                    }))
+                    setPending(rows)
+                  })
+                  .catch((err) => setError(err?.message || 'Unable to load approvals.'))
+                  .finally(() => setLoading(false))
+              }}
               className="rounded-full border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--text)]"
             >
               Refresh
             </button>
           </div>
         </div>
+        {loading ? (
+          <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+            Loading approvals...
+          </div>
+        ) : null}
+        {error ? (
+          <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            {error}
+          </div>
+        ) : null}
 
         <div className="mt-6 overflow-x-auto rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
           <table className="w-full text-left text-sm">

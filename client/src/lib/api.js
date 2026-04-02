@@ -86,6 +86,24 @@ export async function getAdminDashboard() {
   })
 }
 
+export async function getAdminApprovals() {
+  return request('/api/admin/approvals', {
+    method: 'GET',
+  })
+}
+
+export async function approveMember(memberId) {
+  return request(`/api/admin/approvals/${memberId}/approve`, {
+    method: 'POST',
+  })
+}
+
+export async function rejectMember(memberId) {
+  return request(`/api/admin/approvals/${memberId}/reject`, {
+    method: 'POST',
+  })
+}
+
 export async function updateAdminPassword(payload) {
   return request('/api/admin/password', {
     method: 'PUT',
