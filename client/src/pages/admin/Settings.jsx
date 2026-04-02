@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
 import { getSystemSettings, updateSystemSettings } from '../../lib/api'
+import { applyAccentColor } from '../../lib/theme'
 
 const defaultSettings = {
   systemName: 'DBU Gym System',
@@ -79,6 +80,10 @@ export default function AdminSettings() {
             document.documentElement.dataset.theme = loaded.theme
             window.localStorage.setItem('dbu-theme', loaded.theme)
           }
+          if (loaded.accent_color) {
+            applyAccentColor(loaded.accent_color)
+            window.localStorage.setItem('dbu-accent', loaded.accent_color)
+          }
         }
       } catch (err) {
         if (active) setError(err?.message || 'Unable to load settings.')
@@ -140,6 +145,8 @@ export default function AdminSettings() {
         accent_color: settings.accentColor,
         layout_style: settings.layoutStyle,
       })
+      applyAccentColor(settings.accentColor)
+      window.localStorage.setItem('dbu-accent', settings.accentColor)
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2200)
     } catch (err) {

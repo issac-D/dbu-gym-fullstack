@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './auth/AuthProvider'
+import { loadAccentFromStorage } from './lib/theme'
+
+loadAccentFromStorage()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
