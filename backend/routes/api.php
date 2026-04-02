@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::post('/approvals/{user}/reject', [AdminApprovalsController::class, 'reject']);
     Route::get('/settings', [AdminSystemSettingsController::class, 'show']);
     Route::put('/settings', [AdminSystemSettingsController::class, 'update']);
+    Route::post('/settings/logo', [AdminSystemSettingsController::class, 'updateLogo']);
 
     Route::get('/profile', [AdminProfileController::class, 'show']);
     Route::put('/profile', [AdminProfileController::class, 'update']);

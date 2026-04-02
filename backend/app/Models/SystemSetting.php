@@ -8,6 +8,7 @@ class SystemSetting extends Model
 {
     protected $fillable = [
         'system_name',
+        'logo_path',
         'language',
         'timezone',
         'maintenance_mode',

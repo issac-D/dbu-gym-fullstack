@@ -118,6 +118,32 @@ export async function updateSystemSettings(payload) {
   })
 }
 
+export async function uploadSystemLogo(file) {
+  const formData = new FormData()
+  formData.append('logo', file)
+
+  const response = await fetch(`${API_BASE}/api/admin/settings/logo`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...(getCookie('XSRF-TOKEN')
+        ? { 'X-XSRF-TOKEN': getCookie('XSRF-TOKEN') }
+        : {}),
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    const message = errorBody.message || 'Upload failed'
+    throw new Error(message)
+  }
+
+  return response.json()
+}
+
 export async function updateAdminPassword(payload) {
   return request('/api/admin/password', {
     method: 'PUT',

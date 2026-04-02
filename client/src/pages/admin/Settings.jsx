@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
-import { getSystemSettings, updateSystemSettings } from '../../lib/api'
+import { getSystemSettings, updateSystemSettings, uploadSystemLogo } from '../../lib/api'
 import { applyAccentColor } from '../../lib/theme'
 
 const defaultSettings = {
@@ -34,6 +34,7 @@ export default function AdminSettings() {
   const [showToast, setShowToast] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [logoUrl, setLogoUrl] = useState('')
   const [theme, setTheme] = useState(
     document.documentElement.dataset.theme || 'dark'
   )
@@ -79,6 +80,9 @@ export default function AdminSettings() {
             setTheme(loaded.theme)
             document.documentElement.dataset.theme = loaded.theme
             window.localStorage.setItem('dbu-theme', loaded.theme)
+          }
+          if (loaded.logo_url) {
+            setLogoUrl(loaded.logo_url)
           }
           if (loaded.accent_color) {
             applyAccentColor(loaded.accent_color)
@@ -158,6 +162,22 @@ export default function AdminSettings() {
 
   const handleReload = () => {
     setSettings(defaultSettings)
+  }
+
+  const handleLogoChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setError('')
+    try {
+      const data = await uploadSystemLogo(file)
+      if (data?.logo_url) {
+        setLogoUrl(data.logo_url)
+      }
+    } catch (err) {
+      setError(err?.message || 'Logo upload failed.')
+    } finally {
+      event.target.value = ''
+    }
   }
 
   const handleDownloadBackup = () => {
@@ -245,12 +265,19 @@ export default function AdminSettings() {
                   System Logo
                   <input
                     type="file"
-                    disabled
+                    accept="image/*"
+                    onChange={handleLogoChange}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-sm"
                   />
-                  <span className="text-xs text-[var(--text-soft)]">
-                    Upload disabled in simulated backend
-                  </span>
+                  {logoUrl ? (
+                    <span className="mt-2 block text-xs text-[var(--text-soft)]">
+                      Current logo: {logoUrl}
+                    </span>
+                  ) : (
+                    <span className="mt-2 block text-xs text-[var(--text-soft)]">
+                      Upload a PNG/JPG (max 2MB)
+                    </span>
+                  )}
                 </label>
                 <label className="text-sm text-[var(--text-muted)]">
                   Default Language

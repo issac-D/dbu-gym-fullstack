@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSystemSettingsRequest;
 use App\Services\Admin\SystemSettingsService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class SystemSettingsController extends Controller
 {
@@ -16,10 +17,13 @@ class SystemSettingsController extends Controller
     public function show(): JsonResponse
     {
         $settings = $this->service->get();
+        $logoUrl = $settings->logo_path ? url(Storage::url($settings->logo_path)) : null;
 
         return response()->json([
             'message' => 'Settings loaded.',
-            'settings' => $settings,
+            'settings' => array_merge($settings->toArray(), [
+                'logo_url' => $logoUrl,
+            ]),
         ]);
     }
 
@@ -31,6 +35,25 @@ class SystemSettingsController extends Controller
         return response()->json([
             'message' => 'Settings updated.',
             'settings' => $updated,
+        ]);
+    }
+
+    public function updateLogo(UpdateSystemSettingsRequest $request): JsonResponse
+    {
+        $settings = $this->service->get();
+        $request->validate([
+            'logo' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $path = $request->file('logo')->store('system', 'public');
+        $settings->update([
+            'logo_path' => $path,
+            'updated_by' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Logo updated.',
+            'logo_url' => url(Storage::url($path)),
         ]);
     }
 }
