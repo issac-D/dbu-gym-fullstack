@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ApprovalsController as AdminApprovalsController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Admin\SystemSettingsController as AdminSystemSettingsController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
 use App\Http\Controllers\Member\MembershipController as MemberMembershipController;
@@ -30,6 +31,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::get('/approvals', [AdminApprovalsController::class, 'index']);
     Route::post('/approvals/{user}/approve', [AdminApprovalsController::class, 'approve']);
     Route::post('/approvals/{user}/reject', [AdminApprovalsController::class, 'reject']);
+    Route::get('/settings', [AdminSystemSettingsController::class, 'show']);
+    Route::put('/settings', [AdminSystemSettingsController::class, 'update']);
 
     Route::get('/profile', [AdminProfileController::class, 'show']);
     Route::put('/profile', [AdminProfileController::class, 'update']);

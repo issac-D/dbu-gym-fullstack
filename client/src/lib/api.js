@@ -105,6 +105,19 @@ export async function rejectMember(memberId, payload) {
   })
 }
 
+export async function getSystemSettings() {
+  return request('/api/admin/settings', {
+    method: 'GET',
+  })
+}
+
+export async function updateSystemSettings(payload) {
+  return request('/api/admin/settings', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function updateAdminPassword(payload) {
   return request('/api/admin/password', {
     method: 'PUT',

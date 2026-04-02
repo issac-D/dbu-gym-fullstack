@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
+import { getSystemSettings, updateSystemSettings } from '../../lib/api'
 
 const defaultSettings = {
   systemName: 'DBU Gym System',
@@ -30,6 +31,8 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState(defaultSettings)
   const [saving, setSaving] = useState(false)
   const [showToast, setShowToast] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState(
     document.documentElement.dataset.theme || 'dark'
   )
@@ -37,6 +40,59 @@ export default function AdminSettings() {
   useEffect(() => {
     setSettings((prev) => ({ ...prev, theme }))
   }, [theme])
+
+  useEffect(() => {
+    let active = true
+
+    const loadSettings = async () => {
+      try {
+        const data = await getSystemSettings()
+        if (!active) return
+        const loaded = data?.settings
+        if (loaded) {
+          setSettings((prev) => ({
+            ...prev,
+            systemName: loaded.system_name ?? prev.systemName,
+            language: loaded.language ?? prev.language,
+            timezone: loaded.timezone ?? prev.timezone,
+            maintenanceMode: !!loaded.maintenance_mode,
+            twoFA: !!loaded.two_fa,
+            passwordPolicy: {
+              minLength: loaded.password_min_length ?? prev.passwordPolicy.minLength,
+              expiryDays: loaded.password_expiry_days ?? prev.passwordPolicy.expiryDays,
+              specialChars: !!loaded.password_special_chars,
+            },
+            sessionTimeout: loaded.session_timeout ?? prev.sessionTimeout,
+            maxLoginAttempts: loaded.max_login_attempts ?? prev.maxLoginAttempts,
+            emailNotifications: !!loaded.email_notifications,
+            smsNotifications: !!loaded.sms_notifications,
+            senderEmail: loaded.sender_email ?? prev.senderEmail,
+            apiKey: loaded.api_key ?? prev.apiKey,
+            autoBackup: !!loaded.auto_backup,
+            backupFrequency: loaded.backup_frequency ?? prev.backupFrequency,
+            theme: loaded.theme ?? prev.theme,
+            accentColor: loaded.accent_color ?? prev.accentColor,
+            layoutStyle: loaded.layout_style ?? prev.layoutStyle,
+          }))
+          if (loaded.theme) {
+            setTheme(loaded.theme)
+            document.documentElement.dataset.theme = loaded.theme
+            window.localStorage.setItem('dbu-theme', loaded.theme)
+          }
+        }
+      } catch (err) {
+        if (active) setError(err?.message || 'Unable to load settings.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    loadSettings()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const handleToggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -56,17 +112,41 @@ export default function AdminSettings() {
     }))
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true)
+    setError('')
     document.documentElement.dataset.theme = settings.theme
     window.localStorage.setItem('dbu-theme', settings.theme)
     setTheme(settings.theme)
-
-    setTimeout(() => {
-      setSaving(false)
+    try {
+      await updateSystemSettings({
+        system_name: settings.systemName,
+        language: settings.language,
+        timezone: settings.timezone,
+        maintenance_mode: settings.maintenanceMode,
+        two_fa: settings.twoFA,
+        password_min_length: settings.passwordPolicy.minLength,
+        password_expiry_days: settings.passwordPolicy.expiryDays,
+        password_special_chars: settings.passwordPolicy.specialChars,
+        session_timeout: settings.sessionTimeout,
+        max_login_attempts: settings.maxLoginAttempts,
+        email_notifications: settings.emailNotifications,
+        sms_notifications: settings.smsNotifications,
+        sender_email: settings.senderEmail,
+        api_key: settings.apiKey === '*************' ? null : settings.apiKey,
+        auto_backup: settings.autoBackup,
+        backup_frequency: settings.backupFrequency,
+        theme: settings.theme,
+        accent_color: settings.accentColor,
+        layout_style: settings.layoutStyle,
+      })
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2200)
-    }, 900)
+    } catch (err) {
+      setError(err?.message || 'Failed to save settings.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleReload = () => {
@@ -141,6 +221,17 @@ export default function AdminSettings() {
             </button>
           </div>
         </div>
+
+        {loading ? (
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+            Loading settings...
+          </div>
+        ) : null}
+        {error ? (
+          <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            {error}
+          </div>
+        ) : null}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
