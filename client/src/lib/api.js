@@ -98,9 +98,10 @@ export async function approveMember(memberId) {
   })
 }
 
-export async function rejectMember(memberId) {
+export async function rejectMember(memberId, payload) {
   return request(`/api/admin/approvals/${memberId}/reject`, {
     method: 'POST',
+    body: JSON.stringify(payload || {}),
   })
 }
 

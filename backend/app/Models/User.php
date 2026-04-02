@@ -23,6 +23,11 @@ use Laravel\Sanctum\HasApiTokens;
     'membership_type',
     'membership_plan',
     'membership_status',
+    'approved_by',
+    'approved_at',
+    'rejected_by',
+    'rejected_at',
+    'rejection_reason',
     'payment_status',
     'plan_start_at',
     'plan_expires_at',
@@ -54,6 +59,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'plan_start_at' => 'datetime',
             'plan_expires_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
         ];
     }
 }

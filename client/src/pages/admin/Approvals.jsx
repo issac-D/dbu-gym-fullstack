@@ -11,6 +11,7 @@ export default function Approvals() {
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [rejectReason, setRejectReason] = useState('')
 
   const pendingCount = pending.length
 
@@ -61,6 +62,7 @@ export default function Approvals() {
       await approveMember(selected.id)
       setPending((prev) => prev.filter((member) => member.id !== selected.id))
       setSelected(null)
+      setRejectReason('')
     } catch (err) {
       setError(err?.message || 'Failed to approve member.')
     }
@@ -69,9 +71,10 @@ export default function Approvals() {
   const handleReject = async () => {
     if (!selected) return
     try {
-      await rejectMember(selected.id)
+      await rejectMember(selected.id, rejectReason ? { reason: rejectReason } : undefined)
       setPending((prev) => prev.filter((member) => member.id !== selected.id))
       setSelected(null)
+      setRejectReason('')
     } catch (err) {
       setError(err?.message || 'Failed to reject member.')
     }
@@ -177,13 +180,16 @@ export default function Approvals() {
                     </td>
                     <td>{member.membershipType}</td>
                     <td className="text-right pr-4">
-                      <button
-                        type="button"
-                        onClick={() => setSelected(member)}
-                        className="rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-black"
-                      >
-                        Review
-                      </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelected(member)
+                  setRejectReason('')
+                }}
+                className="rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-black"
+              >
+                Review
+              </button>
                     </td>
                   </tr>
                 ))
@@ -250,6 +256,19 @@ export default function Approvals() {
                 <span className="text-[var(--text-soft)]">Payment</span>
                 <span className="font-semibold text-emerald-200">Paid</span>
               </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm text-[var(--text-soft)]">
+                Reject Reason (optional)
+                <textarea
+                  rows="3"
+                  value={rejectReason}
+                  onChange={(event) => setRejectReason(event.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
+                  placeholder="Add a short reason for rejection..."
+                />
+              </label>
             </div>
 
             <div className="mt-6 flex gap-3">

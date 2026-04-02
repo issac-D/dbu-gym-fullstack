@@ -12,6 +12,8 @@ class AdminDashboardService
         $totalMembers = User::query()->where('role', 'member')->count();
         $activeMembers = User::query()->where('role', 'member')->where('membership_status', 'Active')->count();
         $pendingMembers = User::query()->where('role', 'member')->where('membership_status', 'pending')->count();
+        $approvedMembers = User::query()->where('role', 'member')->whereNotNull('approved_at')->count();
+        $rejectedMembers = User::query()->where('role', 'member')->whereNotNull('rejected_at')->count();
         $revenue = User::query()->where('role', 'member')->sum('plan_cost');
         $chart = $this->buildChart();
 
@@ -20,6 +22,8 @@ class AdminDashboardService
                 'total_members' => $totalMembers,
                 'active_members' => $activeMembers,
                 'pending_members' => $pendingMembers,
+                'approved_members' => $approvedMembers,
+                'rejected_members' => $rejectedMembers,
                 'total_revenue' => $revenue,
             ],
             'chart' => $chart,

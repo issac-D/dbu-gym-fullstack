@@ -368,6 +368,8 @@ export default function AdminDashboard() {
     total: dashboardStats?.total_members ?? stats.total,
     active: dashboardStats?.active_members ?? stats.active,
     pending: dashboardStats?.pending_members ?? 0,
+    approved: dashboardStats?.approved_members ?? 0,
+    rejected: dashboardStats?.rejected_members ?? 0,
     revenue: dashboardStats?.total_revenue ?? stats.revenue,
   }
 
@@ -490,7 +492,7 @@ export default function AdminDashboard() {
             { label: 'Total Members', value: statsView.total },
             { label: 'Active', value: statsView.active },
             { label: 'Pending', value: statsView.pending },
-            { label: 'Uni / Ext', value: `${stats.uni} / ${stats.ext}` },
+            { label: 'Approved', value: statsView.approved },
             { label: 'Est. Revenue', value: statsView.revenue.toLocaleString() },
           ].map((stat) => (
             <div
@@ -564,6 +566,14 @@ export default function AdminDashboard() {
               </p>
               <p className="mt-2 text-lg font-semibold text-amber-200">
                 {statsView.pending} Members
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
+                Rejected Members
+              </p>
+              <p className="mt-2 text-lg font-semibold text-red-200">
+                {statsView.rejected} Members
               </p>
             </div>
             <div>

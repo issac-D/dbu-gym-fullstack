@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
 class ApprovalService
@@ -16,19 +17,27 @@ class ApprovalService
             ->get();
     }
 
-    public function approve(User $user): User
+    public function approve(User $user, User $admin): User
     {
         $user->update([
             'membership_status' => 'Active',
+            'approved_by' => $admin->id,
+            'approved_at' => Carbon::now(),
+            'rejected_by' => null,
+            'rejected_at' => null,
+            'rejection_reason' => null,
         ]);
 
         return $user->refresh();
     }
 
-    public function reject(User $user): User
+    public function reject(User $user, User $admin, ?string $reason = null): User
     {
         $user->update([
             'membership_status' => 'rejected',
+            'rejected_by' => $admin->id,
+            'rejected_at' => Carbon::now(),
+            'rejection_reason' => $reason,
         ]);
 
         return $user->refresh();

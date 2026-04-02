@@ -32,7 +32,7 @@ class ApprovalsController extends Controller
                 'message' => 'Member not found.',
             ], 404);
         }
-        $updated = $this->service->approve($user);
+        $updated = $this->service->approve($user, $request->user());
 
         return response()->json([
             'message' => 'Member approved.',
@@ -47,7 +47,10 @@ class ApprovalsController extends Controller
                 'message' => 'Member not found.',
             ], 404);
         }
-        $updated = $this->service->reject($user);
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+        $updated = $this->service->reject($user, $request->user(), $validated['reason'] ?? null);
 
         return response()->json([
             'message' => 'Member rejected.',
