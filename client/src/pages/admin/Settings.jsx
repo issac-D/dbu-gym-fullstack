@@ -117,7 +117,7 @@ export default function AdminSettings() {
     }))
   }
 
-  const handleSave = async () => {
+  const handleSave = async (sectionLabel = 'Settings') => {
     setSaving(true)
     setError('')
     document.documentElement.dataset.theme = settings.theme
@@ -210,22 +210,6 @@ export default function AdminSettings() {
             >
               <i className="fas fa-sync-alt mr-2"></i>Reload
             </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
-            >
-              {saving ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent"></span>
-                  Saving
-                </span>
-              ) : (
-                <span>
-                  <i className="fas fa-save mr-2"></i>Save Changes
-                </span>
-              )}
-            </button>
           </div>
         </div>
 
@@ -305,6 +289,15 @@ export default function AdminSettings() {
                     System access restricted to administrators.
                   </p>
                 </div>
+              </div>
+              <div className="border-t border-[var(--border)] px-6 py-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSave('General System Settings')}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                >
+                  {saving ? 'Saving...' : 'Save General Settings'}
+                </button>
               </div>
             </section>
 
@@ -391,6 +384,15 @@ export default function AdminSettings() {
                   </label>
                 </div>
               </div>
+              <div className="border-t border-[var(--border)] px-6 py-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSave('Security Settings')}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                >
+                  {saving ? 'Saving...' : 'Save Security Settings'}
+                </button>
+              </div>
             </section>
           </div>
 
@@ -438,6 +440,15 @@ export default function AdminSettings() {
                   />
                 </label>
               </div>
+              <div className="border-t border-[var(--border)] px-6 py-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSave('Notification Settings')}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                >
+                  {saving ? 'Saving...' : 'Save Notifications'}
+                </button>
+              </div>
             </section>
 
             <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
@@ -481,6 +492,15 @@ export default function AdminSettings() {
                     <i className="fas fa-redo mr-2"></i>Trigger New Backup
                   </button>
                 </div>
+              </div>
+              <div className="border-t border-[var(--border)] px-6 py-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSave('Backup Settings')}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                >
+                  {saving ? 'Saving...' : 'Save Backup Settings'}
+                </button>
               </div>
             </section>
 
@@ -535,6 +555,15 @@ export default function AdminSettings() {
                     <option value="compact">Compact</option>
                   </select>
                 </label>
+              </div>
+              <div className="border-t border-[var(--border)] px-6 py-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSave('UI Preferences')}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                >
+                  {saving ? 'Saving...' : 'Save UI Preferences'}
+                </button>
               </div>
             </section>
           </div>
