@@ -40,6 +40,46 @@ class ApprovalService
         return $query->latest('created_at')->get();
     }
 
+    public function listHistory(array $filters = []): Collection
+    {
+        $query = User::query()
+            ->where('role', 'member')
+            ->where(function ($builder) {
+                $builder->whereNotNull('approved_at')
+                    ->orWhereNotNull('rejected_at');
+            })
+            ->with(['approvedBy', 'rejectedBy']);
+
+        $status = $filters['status'] ?? 'all';
+        if ($status && $status !== 'all') {
+            $statusValue = match (strtolower($status)) {
+                'approved', 'active' => 'Active',
+                'rejected' => 'rejected',
+                default => null,
+            };
+            if ($statusValue) {
+                $query->where('membership_status', $statusValue);
+            }
+        }
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('member_id', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $memberType = $filters['member_type'] ?? null;
+        if ($memberType === 'university' || $memberType === 'external') {
+            $query->where('member_type', $memberType);
+        }
+
+        return $query->latest('updated_at')->get();
+    }
+
     public function approve(User $user, User $admin): User
     {
         $user->update([

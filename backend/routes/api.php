@@ -34,6 +34,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::put('/members/{user}', [AdminMembersController::class, 'update']);
     Route::patch('/members/{user}/status', [AdminMembersController::class, 'setStatus']);
     Route::get('/approvals', [AdminApprovalsController::class, 'index']);
+    Route::get('/approvals/history', [AdminApprovalsController::class, 'history']);
     Route::post('/approvals/{user}/approve', [AdminApprovalsController::class, 'approve']);
     Route::post('/approvals/{user}/reject', [AdminApprovalsController::class, 'reject']);
     Route::get('/settings', [AdminSystemSettingsController::class, 'show']);

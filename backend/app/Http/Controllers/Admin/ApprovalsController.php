@@ -26,6 +26,17 @@ class ApprovalsController extends Controller
         ]);
     }
 
+    public function history(Request $request): JsonResponse
+    {
+        $filters = $request->only(['status', 'search', 'member_type']);
+        $history = $this->service->listHistory($filters);
+
+        return response()->json([
+            'message' => 'Approval history loaded.',
+            'data' => UserResource::collection($history),
+        ]);
+    }
+
     public function approve(Request $request, User $user): JsonResponse
     {
         if ($user->role !== 'member') {

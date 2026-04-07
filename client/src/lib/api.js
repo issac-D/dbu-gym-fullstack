@@ -124,6 +124,19 @@ export async function getAdminApprovals(params = {}) {
   })
 }
 
+export async function getAdminApprovalHistory(params = {}) {
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+  )
+  const query = new URLSearchParams(cleaned).toString()
+  const path = query
+    ? `/api/admin/approvals/history?${query}`
+    : '/api/admin/approvals/history'
+  return request(path, {
+    method: 'GET',
+  })
+}
+
 export async function approveMember(memberId) {
   return request(`/api/admin/approvals/${memberId}/approve`, {
     method: 'POST',
