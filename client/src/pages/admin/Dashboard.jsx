@@ -409,6 +409,14 @@ export default function AdminDashboard() {
   const [dashboardError, setDashboardError] = useState('')
   const [dashboardChart, setDashboardChart] = useState(null)
   const [membersError, setMembersError] = useState('')
+  const [membersMeta, setMembersMeta] = useState({
+    currentPage: 1,
+    lastPage: 1,
+    total: 0,
+    perPage: 8,
+  })
+  const [savingMember, setSavingMember] = useState(false)
+  const [toast, setToast] = useState(null)
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -425,7 +433,8 @@ export default function AdminDashboard() {
   const [theme, setTheme] = useState(
     document.documentElement.dataset.theme || 'dark'
   )
-  const itemsPerPage = 8
+  const itemsPerPage = membersMeta.perPage || 8
+  const totalPages = membersMeta.lastPage || 1
 
   const resetForm = () => {
     setForm({
@@ -452,26 +461,6 @@ export default function AdminDashboard() {
         ...getStatus(member.expiryDate),
       })),
     [members]
-  )
-
-  const filteredMembers = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    return enrichedMembers.filter((member) => {
-      const matchesSearch =
-        member.membershipId.toLowerCase().includes(term) ||
-        member.fullName.toLowerCase().includes(term)
-      const matchesStatus = !statusFilter || member.computedStatus === statusFilter
-      let matchesType = true
-      if (typeFilter === 'university') matchesType = member.isUniversityMember
-      if (typeFilter === 'external') matchesType = !member.isUniversityMember
-      return matchesSearch && matchesStatus && matchesType
-    })
-  }, [enrichedMembers, search, statusFilter, typeFilter])
-
-  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage) || 1
-  const paginated = filteredMembers.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage
   )
 
   const stats = useMemo(() => {
@@ -536,12 +525,24 @@ export default function AdminDashboard() {
     address: user.address || '',
   })
 
-  const loadMembers = async () => {
+  const loadMembers = async (pageOverride) => {
     try {
-      const data = await getAdminMembers()
+      const data = await getAdminMembers({
+        page: pageOverride || page,
+        per_page: itemsPerPage,
+        search,
+        status: statusFilter || undefined,
+        member_type: typeFilter || undefined,
+      })
       const rows = (data?.data?.data || data?.data || []).map(mapUserToMember)
       setMembers(rows)
       setMembersError('')
+      setMembersMeta({
+        currentPage: data?.meta?.current_page || page,
+        lastPage: data?.meta?.last_page || 1,
+        total: data?.meta?.total || rows.length,
+        perPage: data?.meta?.per_page || itemsPerPage,
+      })
     } catch (err) {
       setMembersError(err?.message || 'Unable to load members.')
     }
@@ -560,7 +561,13 @@ export default function AdminDashboard() {
     return () => {
       active = false
     }
-  }, [])
+  }, [page, search, statusFilter, typeFilter])
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(null), 3000)
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
   const statsView = {
     total: dashboardStats?.total_members ?? stats.total,
@@ -608,15 +615,18 @@ export default function AdminDashboard() {
   const handleAddMember = async (event) => {
     event.preventDefault()
     setPhoneError('')
+    setSavingMember(true)
 
     const phoneValid = /^(\+251(9|7)\d{8}|0(9|7)\d{8})$/.test(form.phone)
     if (!phoneValid) {
       setPhoneError('Invalid Ethiopian phone number.')
+      setSavingMember(false)
       return
     }
 
     if (memberType === 'external' && form.nationalId.length !== 16) {
       alert('National ID must be 16 digits.')
+      setSavingMember(false)
       return
     }
 
@@ -638,14 +648,19 @@ export default function AdminDashboard() {
     try {
       if (editingMember) {
         await updateAdminMember(editingMember.id, payload)
+        setToast({ type: 'success', message: 'Member updated successfully.' })
       } else {
         await createAdminMember(payload)
+        setToast({ type: 'success', message: 'Member created successfully.' })
       }
-      await loadMembers()
+      await loadMembers(1)
+      setPage(1)
       setShowModal(false)
       resetForm()
     } catch (err) {
       alert(err?.message || 'Unable to save member.')
+    } finally {
+      setSavingMember(false)
     }
   }
 
@@ -656,6 +671,10 @@ export default function AdminDashboard() {
     try {
       await updateAdminMemberStatus(member.id, nextStatus)
       await loadMembers()
+      setToast({
+        type: 'success',
+        message: `Member ${nextStatus === 'active' ? 'activated' : 'deactivated'} successfully.`,
+      })
     } catch (err) {
       alert(err?.message || 'Unable to update status.')
     }
@@ -882,6 +901,17 @@ export default function AdminDashboard() {
             </button>
           </div>
 
+          {toast ? (
+            <div
+              className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+                toast.type === 'success'
+                  ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100'
+                  : 'border-amber-400/40 bg-amber-500/10 text-amber-100'
+              }`}
+            >
+              {toast.message}
+            </div>
+          ) : null}
           {membersError ? (
             <div className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
               ⚠️ {membersError}
@@ -892,7 +922,10 @@ export default function AdminDashboard() {
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             <input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value)
+                setPage(1)
+              }}
               placeholder="🔍 Search by ID or Name..."
               className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
             />
@@ -934,8 +967,8 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {paginated.length ? (
-                  paginated.map((member, idx) => (
+                {enrichedMembers.length ? (
+                  enrichedMembers.map((member, idx) => (
                     <tr key={member.id} className={`border-t border-[var(--border)] ${idx % 2 === 0 ? 'bg-[var(--bg)]/30' : ''} transition-colors hover:bg-[var(--surface)]`}>
                       <td className="px-4 py-3 font-mono text-xs">{member.membershipId}</td>
                       <td className="px-4 py-3 font-medium">{member.fullName}</td>
@@ -1268,9 +1301,17 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 hover:shadow-lg"
+                  disabled={savingMember}
+                  className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {editingMember ? 'Update Member' : 'Save Member'}
+                  {savingMember ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/60 border-t-transparent"></span>
+                      Saving...
+                    </span>
+                  ) : (
+                    <span>{editingMember ? 'Update Member' : 'Save Member'}</span>
+                  )}
                 </button>
               </div>
             </form>

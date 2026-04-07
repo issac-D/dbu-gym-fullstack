@@ -19,11 +19,20 @@ class MembersController extends Controller
 
     public function index(): JsonResponse
     {
-        $members = $this->service->list();
+        $filters = request()->only(['search', 'member_type', 'status']);
+        $perPage = (int) request()->get('per_page', 8);
+        $perPage = $perPage > 0 ? min($perPage, 50) : 8;
+        $members = $this->service->list($filters, $perPage);
 
         return response()->json([
             'message' => 'Members loaded.',
             'data' => UserResource::collection($members),
+            'meta' => [
+                'current_page' => $members->currentPage(),
+                'last_page' => $members->lastPage(),
+                'per_page' => $members->perPage(),
+                'total' => $members->total(),
+            ],
         ]);
     }
 

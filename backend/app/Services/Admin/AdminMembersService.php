@@ -5,16 +5,42 @@ namespace App\Services\Admin;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class AdminMembersService
 {
-    public function list(): Collection
+    public function list(array $filters = [], int $perPage = 8): LengthAwarePaginator
     {
-        return User::query()
-            ->where('role', 'member')
-            ->latest('created_at')
-            ->get();
+        $query = User::query()->where('role', 'member');
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('member_id', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $memberType = $filters['member_type'] ?? null;
+        if ($memberType === 'university' || $memberType === 'external') {
+            $query->where('member_type', $memberType);
+        }
+
+        $status = $filters['status'] ?? null;
+        if ($status === 'expired') {
+            $query->whereNotNull('plan_expires_at')
+                ->where('plan_expires_at', '<', Carbon::now()->startOfDay());
+        } elseif ($status === 'expiring_soon') {
+            $query->whereNotNull('plan_expires_at')
+                ->whereBetween('plan_expires_at', [Carbon::now()->startOfDay(), Carbon::now()->addDays(7)->endOfDay()]);
+        } elseif ($status === 'active') {
+            $query->whereNotNull('plan_expires_at')
+                ->where('plan_expires_at', '>', Carbon::now()->addDays(7)->endOfDay());
+        }
+
+        return $query->latest('created_at')->paginate($perPage);
     }
 
     public function create(array $data, User $admin): User

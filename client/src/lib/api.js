@@ -86,8 +86,13 @@ export async function getAdminDashboard() {
   })
 }
 
-export async function getAdminMembers() {
-  return request('/api/admin/members', {
+export async function getAdminMembers(params = {}) {
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+  )
+  const query = new URLSearchParams(cleaned).toString()
+  const path = query ? `/api/admin/members?${query}` : '/api/admin/members'
+  return request(path, {
     method: 'GET',
   })
 }
