@@ -30,11 +30,12 @@ const defaultSettings = {
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState(defaultSettings)
-  const [saving, setSaving] = useState(false)
-  const [showToast, setShowToast] = useState(false)
+  const [savingSection, setSavingSection] = useState(null)
+  const [toast, setToast] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [logoUrl, setLogoUrl] = useState('')
+  const [logoUploading, setLogoUploading] = useState(false)
   const [theme, setTheme] = useState(
     document.documentElement.dataset.theme || 'dark'
   )
@@ -122,7 +123,7 @@ export default function AdminSettings() {
   }
 
   const handleSave = async (sectionLabel = 'Settings') => {
-    setSaving(true)
+    setSavingSection(sectionLabel)
     setError('')
     document.documentElement.dataset.theme = settings.theme
     window.localStorage.setItem('dbu-theme', settings.theme)
@@ -151,12 +152,12 @@ export default function AdminSettings() {
       })
       applyAccentColor(settings.accentColor)
       window.localStorage.setItem('dbu-accent', settings.accentColor)
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 2200)
+      setToast({ type: 'success', message: `${sectionLabel} saved successfully.` })
     } catch (err) {
       setError(err?.message || 'Failed to save settings.')
+      setToast({ type: 'error', message: err?.message || 'Failed to save settings.' })
     } finally {
-      setSaving(false)
+      setSavingSection(null)
     }
   }
 
@@ -169,13 +170,17 @@ export default function AdminSettings() {
     if (!file) return
     setError('')
     try {
+      setLogoUploading(true)
       const data = await uploadSystemLogo(file)
       if (data?.logo_url) {
         setLogoUrl(data.logo_url)
+        setToast({ type: 'success', message: 'Logo updated successfully.' })
       }
     } catch (err) {
       setError(err?.message || 'Logo upload failed.')
+      setToast({ type: 'error', message: err?.message || 'Logo upload failed.' })
     } finally {
+      setLogoUploading(false)
       event.target.value = ''
     }
   }
@@ -202,6 +207,12 @@ export default function AdminSettings() {
   }
 
   const previewTheme = useMemo(() => settings.theme, [settings.theme])
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(null), 2500)
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
@@ -271,11 +282,11 @@ export default function AdminSettings() {
                   />
                   {logoUrl ? (
                     <span className="mt-2 block text-xs text-[var(--text-soft)]">
-                      Current logo: {logoUrl}
+                      {logoUploading ? 'Uploading...' : `Current logo: ${logoUrl}`}
                     </span>
                   ) : (
                     <span className="mt-2 block text-xs text-[var(--text-soft)]">
-                      Upload a PNG/JPG (max 2MB)
+                      {logoUploading ? 'Uploading...' : 'Upload a PNG/JPG (max 2MB)'}
                     </span>
                   )}
                 </label>
@@ -321,9 +332,10 @@ export default function AdminSettings() {
                 <button
                   type="button"
                   onClick={() => handleSave('General System Settings')}
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                  disabled={savingSection === 'General System Settings'}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : 'Save General Settings'}
+                  {savingSection === 'General System Settings' ? 'Saving...' : 'Save General Settings'}
                 </button>
               </div>
             </section>
@@ -415,9 +427,10 @@ export default function AdminSettings() {
                 <button
                   type="button"
                   onClick={() => handleSave('Security Settings')}
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                  disabled={savingSection === 'Security Settings'}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : 'Save Security Settings'}
+                  {savingSection === 'Security Settings' ? 'Saving...' : 'Save Security Settings'}
                 </button>
               </div>
             </section>
@@ -471,9 +484,10 @@ export default function AdminSettings() {
                 <button
                   type="button"
                   onClick={() => handleSave('Notification Settings')}
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                  disabled={savingSection === 'Notification Settings'}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : 'Save Notifications'}
+                  {savingSection === 'Notification Settings' ? 'Saving...' : 'Save Notifications'}
                 </button>
               </div>
             </section>
@@ -524,9 +538,10 @@ export default function AdminSettings() {
                 <button
                   type="button"
                   onClick={() => handleSave('Backup Settings')}
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                  disabled={savingSection === 'Backup Settings'}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : 'Save Backup Settings'}
+                  {savingSection === 'Backup Settings' ? 'Saving...' : 'Save Backup Settings'}
                 </button>
               </div>
             </section>
@@ -587,9 +602,10 @@ export default function AdminSettings() {
                 <button
                   type="button"
                   onClick={() => handleSave('UI Preferences')}
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black"
+                  disabled={savingSection === 'UI Preferences'}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : 'Save UI Preferences'}
+                  {savingSection === 'UI Preferences' ? 'Saving...' : 'Save UI Preferences'}
                 </button>
               </div>
             </section>
@@ -599,9 +615,16 @@ export default function AdminSettings() {
 
       <Footer />
 
-      {showToast ? (
-        <div className="fixed bottom-6 right-6 rounded-2xl bg-emerald-500/90 px-4 py-3 text-sm font-semibold text-black shadow-xl">
-          <i className="fas fa-check-circle mr-2"></i>Settings saved successfully!
+      {toast ? (
+        <div
+          className={`fixed bottom-6 right-6 rounded-2xl px-4 py-3 text-sm font-semibold shadow-xl ${
+            toast.type === 'success'
+              ? 'bg-emerald-500/90 text-black'
+              : 'bg-red-500/90 text-white'
+          }`}
+        >
+          <i className={`fas ${toast.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'} mr-2`}></i>
+          {toast.message}
         </div>
       ) : null}
     </div>
