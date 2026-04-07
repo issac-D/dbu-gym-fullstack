@@ -37,6 +37,15 @@ class ApprovalService
             $query->where('member_type', $memberType);
         }
 
+        $fromDate = $filters['from_date'] ?? null;
+        if ($fromDate) {
+            $query->whereDate('created_at', '>=', $fromDate);
+        }
+        $toDate = $filters['to_date'] ?? null;
+        if ($toDate) {
+            $query->whereDate('created_at', '<=', $toDate);
+        }
+
         return $query->latest('created_at')->get();
     }
 
@@ -75,6 +84,15 @@ class ApprovalService
         $memberType = $filters['member_type'] ?? null;
         if ($memberType === 'university' || $memberType === 'external') {
             $query->where('member_type', $memberType);
+        }
+
+        $fromDate = $filters['from_date'] ?? null;
+        if ($fromDate) {
+            $query->whereDate('updated_at', '>=', $fromDate);
+        }
+        $toDate = $filters['to_date'] ?? null;
+        if ($toDate) {
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
         return $query->latest('updated_at')->get();

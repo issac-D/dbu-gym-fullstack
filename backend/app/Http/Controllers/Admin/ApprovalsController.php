@@ -17,7 +17,7 @@ class ApprovalsController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->only(['status', 'search', 'member_type']);
+        $filters = $request->only(['status', 'search', 'member_type', 'from_date', 'to_date']);
         $pending = $this->service->list($filters);
 
         return response()->json([
@@ -28,7 +28,7 @@ class ApprovalsController extends Controller
 
     public function history(Request $request): JsonResponse
     {
-        $filters = $request->only(['status', 'search', 'member_type']);
+        $filters = $request->only(['status', 'search', 'member_type', 'from_date', 'to_date']);
         $history = $this->service->listHistory($filters);
 
         return response()->json([

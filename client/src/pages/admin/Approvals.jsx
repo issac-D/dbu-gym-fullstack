@@ -11,6 +11,8 @@ export default function Approvals() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('pending')
   const [typeFilter, setTypeFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -34,6 +36,8 @@ export default function Approvals() {
             status: statusFilter || 'pending',
             search,
             member_type: typeFilter || undefined,
+            from_date: fromDate || undefined,
+            to_date: toDate || undefined,
           })
           if (!active) return
           const rows = (data?.data || []).map((user) => ({
@@ -64,7 +68,7 @@ export default function Approvals() {
       clearTimeout(timeout)
       active = false
     }
-  }, [search, statusFilter, typeFilter])
+  }, [search, statusFilter, typeFilter, fromDate, toDate])
 
   const handleApprove = async () => {
     if (!selected) return
@@ -126,6 +130,8 @@ export default function Approvals() {
                   status: statusFilter || 'pending',
                   search,
                   member_type: typeFilter || undefined,
+                  from_date: fromDate || undefined,
+                  to_date: toDate || undefined,
                 })
                   .then((data) => {
                     const rows = (data?.data || []).map((user) => ({
@@ -190,6 +196,26 @@ export default function Approvals() {
             <option value="external">External</option>
           </select>
         </div>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <label className="text-xs text-[var(--text-soft)]">
+            From
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(event) => setFromDate(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+            />
+          </label>
+          <label className="text-xs text-[var(--text-soft)]">
+            To
+            <input
+              type="date"
+              value={toDate}
+              onChange={(event) => setToDate(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+            />
+          </label>
+        </div>
 
         <div className="mt-4 overflow-x-auto rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
           <table className="w-full text-left text-sm">
@@ -224,20 +250,29 @@ export default function Approvals() {
                     </td>
                     <td>{member.membershipType}</td>
                     <td>
-                      <span className="rounded-full border border-[var(--border)] px-2 py-1 text-xs">
+                      <span
+                        className={`rounded-full border px-2 py-1 text-xs ${
+                          member.status === 'approved' || member.status === 'active'
+                            ? 'border-emerald-400/60 text-emerald-200'
+                            : member.status === 'rejected'
+                            ? 'border-red-400/60 text-red-200'
+                            : 'border-amber-400/60 text-amber-200'
+                        }`}
+                      >
                         {member.status || 'pending'}
                       </span>
                     </td>
                     <td className="text-right pr-4">
                       <button
                         type="button"
+                        disabled={member.status && member.status !== 'pending'}
                         onClick={() => {
                           setSelected(member)
                           setRejectReason('')
                         }}
-                        className="rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-black"
+                        className="rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        Review
+                        {member.status && member.status !== 'pending' ? 'View' : 'Review'}
                       </button>
                     </td>
                   </tr>
@@ -324,14 +359,16 @@ export default function Approvals() {
               <button
                 type="button"
                 onClick={handleReject}
-                className="w-full rounded-full border border-red-400/60 px-4 py-2 text-sm font-semibold text-red-200"
+                disabled={selected.status && selected.status !== 'pending'}
+                className="w-full rounded-full border border-red-400/60 px-4 py-2 text-sm font-semibold text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Reject
               </button>
               <button
                 type="button"
                 onClick={handleApprove}
-                className="w-full rounded-full bg-emerald-500/90 px-4 py-2 text-sm font-semibold text-black"
+                disabled={selected.status && selected.status !== 'pending'}
+                className="w-full rounded-full bg-emerald-500/90 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Approve
               </button>

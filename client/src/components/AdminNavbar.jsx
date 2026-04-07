@@ -30,6 +30,9 @@ export default function AdminNavbar({ adminName, theme, onToggleTheme }) {
           <Link className="text-[var(--text-muted)]" to="/admin/approvals">
             Approvals
           </Link>
+          <Link className="text-[var(--text-muted)]" to="/admin/approvals/history">
+            Approval Log
+          </Link>
           <Link className="text-[var(--text-muted)]" to="#member-management">
             Members
           </Link>
