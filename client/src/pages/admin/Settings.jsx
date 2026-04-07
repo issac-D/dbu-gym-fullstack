@@ -30,6 +30,7 @@ const defaultSettings = {
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState(defaultSettings)
+  const [savedSnapshot, setSavedSnapshot] = useState(defaultSettings)
   const [savingSection, setSavingSection] = useState(null)
   const [toast, setToast] = useState(null)
   const [error, setError] = useState('')
@@ -54,6 +55,30 @@ export default function AdminSettings() {
         const loaded = data?.settings
         if (loaded) {
           setSettings((prev) => ({
+            ...prev,
+            systemName: loaded.system_name ?? prev.systemName,
+            language: loaded.language ?? prev.language,
+            timezone: loaded.timezone ?? prev.timezone,
+            maintenanceMode: !!loaded.maintenance_mode,
+            twoFA: !!loaded.two_fa,
+            passwordPolicy: {
+              minLength: loaded.password_min_length ?? prev.passwordPolicy.minLength,
+              expiryDays: loaded.password_expiry_days ?? prev.passwordPolicy.expiryDays,
+              specialChars: !!loaded.password_special_chars,
+            },
+            sessionTimeout: loaded.session_timeout ?? prev.sessionTimeout,
+            maxLoginAttempts: loaded.max_login_attempts ?? prev.maxLoginAttempts,
+            emailNotifications: !!loaded.email_notifications,
+            smsNotifications: !!loaded.sms_notifications,
+            senderEmail: loaded.sender_email ?? prev.senderEmail,
+            apiKey: loaded.api_key ?? prev.apiKey,
+            autoBackup: !!loaded.auto_backup,
+            backupFrequency: loaded.backup_frequency ?? prev.backupFrequency,
+            theme: loaded.theme ?? prev.theme,
+            accentColor: loaded.accent_color ?? prev.accentColor,
+            layoutStyle: loaded.layout_style ?? prev.layoutStyle,
+          }))
+          setSavedSnapshot((prev) => ({
             ...prev,
             systemName: loaded.system_name ?? prev.systemName,
             language: loaded.language ?? prev.language,
@@ -129,7 +154,7 @@ export default function AdminSettings() {
     window.localStorage.setItem('dbu-theme', settings.theme)
     setTheme(settings.theme)
     try {
-      await updateSystemSettings({
+      const payload = {
         system_name: settings.systemName,
         language: settings.language,
         timezone: settings.timezone,
@@ -149,9 +174,12 @@ export default function AdminSettings() {
         theme: settings.theme,
         accent_color: settings.accentColor,
         layout_style: settings.layoutStyle,
-      })
+      }
+
+      await updateSystemSettings(payload)
       applyAccentColor(settings.accentColor)
       window.localStorage.setItem('dbu-accent', settings.accentColor)
+      setSavedSnapshot(settings)
       setToast({ type: 'success', message: `${sectionLabel} saved successfully.` })
     } catch (err) {
       setError(err?.message || 'Failed to save settings.')
@@ -208,6 +236,46 @@ export default function AdminSettings() {
 
   const previewTheme = useMemo(() => settings.theme, [settings.theme])
 
+  const hasUnsavedChanges = useMemo(
+    () => JSON.stringify(settings) !== JSON.stringify(savedSnapshot),
+    [settings, savedSnapshot]
+  )
+
+  const isSectionDirty = (section) => {
+    const current = settings
+    const saved = savedSnapshot
+    const match = (value, savedValue) => JSON.stringify(value) === JSON.stringify(savedValue)
+
+    if (section === 'General System Settings') {
+      return !match(current.systemName, saved.systemName) ||
+        !match(current.language, saved.language) ||
+        !match(current.timezone, saved.timezone) ||
+        !match(current.maintenanceMode, saved.maintenanceMode)
+    }
+    if (section === 'Security Settings') {
+      return !match(current.twoFA, saved.twoFA) ||
+        !match(current.passwordPolicy, saved.passwordPolicy) ||
+        !match(current.sessionTimeout, saved.sessionTimeout) ||
+        !match(current.maxLoginAttempts, saved.maxLoginAttempts)
+    }
+    if (section === 'Notification Settings') {
+      return !match(current.emailNotifications, saved.emailNotifications) ||
+        !match(current.smsNotifications, saved.smsNotifications) ||
+        !match(current.senderEmail, saved.senderEmail) ||
+        !match(current.apiKey, saved.apiKey)
+    }
+    if (section === 'Backup Settings') {
+      return !match(current.autoBackup, saved.autoBackup) ||
+        !match(current.backupFrequency, saved.backupFrequency)
+    }
+    if (section === 'UI Preferences') {
+      return !match(current.theme, saved.theme) ||
+        !match(current.accentColor, saved.accentColor) ||
+        !match(current.layoutStyle, saved.layoutStyle)
+    }
+    return false
+  }
+
   useEffect(() => {
     if (!toast) return
     const timer = window.setTimeout(() => setToast(null), 2500)
@@ -234,6 +302,15 @@ export default function AdminSettings() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            {hasUnsavedChanges ? (
+              <span className="rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                Unsaved changes
+              </span>
+            ) : (
+              <span className="rounded-full border border-emerald-400/50 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+                All changes saved
+              </span>
+            )}
             <button
               type="button"
               onClick={handleReload}
@@ -245,8 +322,10 @@ export default function AdminSettings() {
         </div>
 
         {loading ? (
-          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
-            Loading settings...
+          <div className="mt-6 space-y-4">
+            <div className="h-36 animate-pulse rounded-3xl border border-[var(--border)] bg-[var(--surface)]"></div>
+            <div className="h-44 animate-pulse rounded-3xl border border-[var(--border)] bg-[var(--surface)]"></div>
+            <div className="h-40 animate-pulse rounded-3xl border border-[var(--border)] bg-[var(--surface)]"></div>
           </div>
         ) : null}
         {error ? (
@@ -258,9 +337,16 @@ export default function AdminSettings() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
             <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
-              <div className="border-b border-[var(--border)] px-6 py-4 font-semibold">
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 font-semibold">
+                <span>
                 <i className="fas fa-desktop mr-2 text-[var(--text-soft)]"></i>
                 General System Settings
+                </span>
+                {!isSectionDirty('General System Settings') ? (
+                  <span className="text-xs font-semibold text-emerald-200">
+                    <i className="fas fa-check-circle mr-2"></i>Saved
+                  </span>
+                ) : null}
               </div>
               <div className="grid gap-4 p-6 md:grid-cols-2">
                 <label className="text-sm text-[var(--text-muted)]">
@@ -341,9 +427,16 @@ export default function AdminSettings() {
             </section>
 
             <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
-              <div className="border-b border-[var(--border)] px-6 py-4 font-semibold">
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 font-semibold">
+                <span>
                 <i className="fas fa-shield-alt mr-2 text-[var(--text-soft)]"></i>
                 Security Settings
+                </span>
+                {!isSectionDirty('Security Settings') ? (
+                  <span className="text-xs font-semibold text-emerald-200">
+                    <i className="fas fa-check-circle mr-2"></i>Saved
+                  </span>
+                ) : null}
               </div>
               <div className="p-6">
                 <label className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
@@ -438,9 +531,16 @@ export default function AdminSettings() {
 
           <div className="space-y-6">
             <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
-              <div className="border-b border-[var(--border)] px-6 py-4 font-semibold">
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 font-semibold">
+                <span>
                 <i className="fas fa-bell mr-2 text-[var(--text-soft)]"></i>
                 Notification Settings
+                </span>
+                {!isSectionDirty('Notification Settings') ? (
+                  <span className="text-xs font-semibold text-emerald-200">
+                    <i className="fas fa-check-circle mr-2"></i>Saved
+                  </span>
+                ) : null}
               </div>
               <div className="p-6">
                 <div className="flex gap-6">
@@ -493,9 +593,16 @@ export default function AdminSettings() {
             </section>
 
             <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
-              <div className="border-b border-[var(--border)] px-6 py-4 font-semibold">
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 font-semibold">
+                <span>
                 <i className="fas fa-database mr-2 text-[var(--text-soft)]"></i>
                 Backup & Data
+                </span>
+                {!isSectionDirty('Backup Settings') ? (
+                  <span className="text-xs font-semibold text-emerald-200">
+                    <i className="fas fa-check-circle mr-2"></i>Saved
+                  </span>
+                ) : null}
               </div>
               <div className="p-6">
                 <label className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
@@ -547,9 +654,16 @@ export default function AdminSettings() {
             </section>
 
             <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
-              <div className="border-b border-[var(--border)] px-6 py-4 font-semibold">
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 font-semibold">
+                <span>
                 <i className="fas fa-palette mr-2 text-[var(--text-soft)]"></i>
                 UI Preferences
+                </span>
+                {!isSectionDirty('UI Preferences') ? (
+                  <span className="text-xs font-semibold text-emerald-200">
+                    <i className="fas fa-check-circle mr-2"></i>Saved
+                  </span>
+                ) : null}
               </div>
               <div className="p-6">
                 <p className="text-sm text-[var(--text-muted)]">Theme</p>
