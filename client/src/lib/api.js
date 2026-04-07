@@ -92,6 +92,27 @@ export async function getAdminMembers() {
   })
 }
 
+export async function createAdminMember(payload) {
+  return request('/api/admin/members', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateAdminMember(memberId, payload) {
+  return request(`/api/admin/members/${memberId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateAdminMemberStatus(memberId, status) {
+  return request(`/api/admin/members/${memberId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ account_status: status }),
+  })
+}
+
 export async function getAdminApprovals() {
   return request('/api/admin/approvals', {
     method: 'GET',

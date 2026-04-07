@@ -22,6 +22,7 @@ class AuthService
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => 'member',
+            'account_status' => 'active',
             'phone' => $data['phone'] ?? null,
             'gender' => $data['gender'] ?? null,
             'member_type' => $data['member_type'] ?? null,

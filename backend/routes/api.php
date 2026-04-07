@@ -30,6 +30,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'show']);
     Route::get('/members', [AdminMembersController::class, 'index']);
+    Route::post('/members', [AdminMembersController::class, 'store']);
+    Route::put('/members/{user}', [AdminMembersController::class, 'update']);
+    Route::patch('/members/{user}/status', [AdminMembersController::class, 'setStatus']);
     Route::get('/approvals', [AdminApprovalsController::class, 'index']);
     Route::post('/approvals/{user}/approve', [AdminApprovalsController::class, 'approve']);
     Route::post('/approvals/{user}/reject', [AdminApprovalsController::class, 'reject']);

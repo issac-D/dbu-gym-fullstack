@@ -1,7 +1,13 @@
 import { useEffect, useId, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
-import { getAdminDashboard, getAdminMembers } from '../../lib/api'
+import {
+  createAdminMember,
+  getAdminDashboard,
+  getAdminMembers,
+  updateAdminMember,
+  updateAdminMemberStatus,
+} from '../../lib/api'
 
 const priceMap = {
   Monthly: 300,
@@ -398,6 +404,7 @@ export default function AdminDashboard() {
   const [page, setPage] = useState(1)
   const [showModal, setShowModal] = useState(false)
   const [memberType, setMemberType] = useState('university')
+  const [editingMember, setEditingMember] = useState(null)
   const [dashboardStats, setDashboardStats] = useState(null)
   const [dashboardError, setDashboardError] = useState('')
   const [dashboardChart, setDashboardChart] = useState(null)
@@ -419,6 +426,24 @@ export default function AdminDashboard() {
     document.documentElement.dataset.theme || 'dark'
   )
   const itemsPerPage = 8
+
+  const resetForm = () => {
+    setForm({
+      fullName: '',
+      email: '',
+      phone: '',
+      password: 'dbugym123',
+      universityId: '',
+      department: '',
+      nationalId: '',
+      address: '',
+      membershipType: 'Monthly',
+      gender: 'Male',
+    })
+    setMemberType('university')
+    setEditingMember(null)
+    setPhoneError('')
+  }
 
   const enrichedMembers = useMemo(
     () =>
@@ -496,20 +521,29 @@ export default function AdminDashboard() {
       return parsed.toISOString().split('T')[0]
     }
 
+    const mapUserToMember = (user) => ({
+      id: String(user.id),
+      fullName: user.name || 'Unknown',
+      membershipId: user.member_id || 'N/A',
+      membershipType: user.membership_plan || user.membership_type || 'N/A',
+      isUniversityMember: user.member_type === 'university',
+      phone: user.phone || 'N/A',
+      joinDate: formatDate(user.plan_start_at || user.created_at),
+      expiryDate: formatDate(user.plan_expires_at),
+      accountStatus: user.account_status || 'active',
+      gender: user.gender || '',
+      email: user.email || '',
+      universityId: user.university_id || '',
+      department: user.department || '',
+      nationalId: user.national_id || '',
+      address: user.address || '',
+    })
+
     const loadMembers = async () => {
       try {
         const data = await getAdminMembers()
         if (!active) return
-        const rows = (data?.data?.data || data?.data || []).map((user) => ({
-          id: String(user.id),
-          fullName: user.name || 'Unknown',
-          membershipId: user.member_id || 'N/A',
-          membershipType: user.membership_plan || user.membership_type || 'N/A',
-          isUniversityMember: user.member_type === 'university',
-          phone: user.phone || 'N/A',
-          joinDate: formatDate(user.plan_start_at || user.created_at),
-          expiryDate: formatDate(user.plan_expires_at),
-        }))
+        const rows = (data?.data?.data || data?.data || []).map(mapUserToMember)
         setMembers(rows)
         setMembersError('')
       } catch (err) {
@@ -569,7 +603,7 @@ export default function AdminDashboard() {
     setPage(1)
   }
 
-  const handleAddMember = (event) => {
+  const handleAddMember = async (event) => {
     event.preventDefault()
     setPhoneError('')
 
@@ -584,46 +618,124 @@ export default function AdminDashboard() {
       return
     }
 
-    const prefix = memberType === 'university' ? 'DBU' : 'EXT'
-    const count = members.filter((m) => m.membershipId.startsWith(prefix)).length + 1
-    const membershipId = `${prefix}-${new Date().getFullYear()}-${String(count).padStart(4, '0')}`
-
-    const expiry = new Date()
-    if (form.membershipType === 'Monthly') expiry.setMonth(expiry.getMonth() + 1)
-    else if (form.membershipType === '1Year') expiry.setFullYear(expiry.getFullYear() + 1)
-    else if (form.membershipType === '6Months') expiry.setMonth(expiry.getMonth() + 6)
-    else expiry.setMonth(expiry.getMonth() + 3)
-
-    const newMember = {
-      id: String(Date.now()),
-      fullName: form.fullName,
-      membershipId,
-      membershipType: form.membershipType,
-      isUniversityMember: memberType === 'university',
+    const payload = {
+      name: form.fullName,
+      email: form.email,
+      password: form.password,
       phone: form.phone,
-      joinDate: new Date().toISOString().split('T')[0],
-      expiryDate: expiry.toISOString().split('T')[0],
+      gender: form.gender,
+      member_type: memberType,
+      membership_type: form.membershipType,
+      membership_plan: form.membershipType,
+      university_id: memberType === 'university' ? form.universityId : undefined,
+      department: memberType === 'university' ? form.department : undefined,
+      national_id: memberType === 'external' ? form.nationalId : undefined,
+      address: memberType === 'external' ? form.address : undefined,
     }
 
-    setMembers((prev) => [newMember, ...prev])
-    setShowModal(false)
-    setForm({
-      fullName: '',
-      email: '',
-      phone: '',
-      password: 'dbugym123',
-      universityId: '',
-      department: '',
-      nationalId: '',
-      address: '',
-      membershipType: 'Monthly',
-      gender: 'Male',
-    })
+    try {
+      if (editingMember) {
+        const response = await updateAdminMember(editingMember.id, payload)
+        const updatedUser = response?.user
+        if (updatedUser) {
+          setMembers((prev) =>
+            prev.map((member) =>
+              member.id === String(updatedUser.id)
+                ? {
+                    ...member,
+                    fullName: updatedUser.name || member.fullName,
+                    membershipId: updatedUser.member_id || member.membershipId,
+                    membershipType: updatedUser.membership_plan || updatedUser.membership_type || member.membershipType,
+                    isUniversityMember: updatedUser.member_type === 'university',
+                    phone: updatedUser.phone || member.phone,
+                    joinDate: updatedUser.plan_start_at
+                      ? new Date(updatedUser.plan_start_at).toISOString().split('T')[0]
+                      : member.joinDate,
+                    expiryDate: updatedUser.plan_expires_at
+                      ? new Date(updatedUser.plan_expires_at).toISOString().split('T')[0]
+                      : member.expiryDate,
+                    accountStatus: updatedUser.account_status || member.accountStatus,
+                    gender: updatedUser.gender || member.gender,
+                    email: updatedUser.email || member.email,
+                    universityId: updatedUser.university_id || member.universityId,
+                    department: updatedUser.department || member.department,
+                    nationalId: updatedUser.national_id || member.nationalId,
+                    address: updatedUser.address || member.address,
+                  }
+                : member
+            )
+          )
+        }
+      } else {
+        const response = await createAdminMember(payload)
+        const createdUser = response?.user
+        if (createdUser) {
+          const newMember = {
+            id: String(createdUser.id),
+            fullName: createdUser.name || form.fullName,
+            membershipId: createdUser.member_id || 'N/A',
+            membershipType: createdUser.membership_plan || createdUser.membership_type || form.membershipType,
+            isUniversityMember: createdUser.member_type === 'university',
+            phone: createdUser.phone || form.phone,
+            joinDate: createdUser.plan_start_at
+              ? new Date(createdUser.plan_start_at).toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0],
+            expiryDate: createdUser.plan_expires_at
+              ? new Date(createdUser.plan_expires_at).toISOString().split('T')[0]
+              : '',
+            accountStatus: createdUser.account_status || 'active',
+            gender: createdUser.gender || form.gender,
+            email: createdUser.email || form.email,
+            universityId: createdUser.university_id || form.universityId,
+            department: createdUser.department || form.department,
+            nationalId: createdUser.national_id || form.nationalId,
+            address: createdUser.address || form.address,
+          }
+          setMembers((prev) => [newMember, ...prev])
+        }
+      }
+      setShowModal(false)
+      resetForm()
+    } catch (err) {
+      alert(err?.message || 'Unable to save member.')
+    }
   }
 
-  const handleDelete = (id) => {
-    if (!window.confirm('Delete this member?')) return
-    setMembers((prev) => prev.filter((m) => m.id !== id))
+  const handleToggleStatus = async (member) => {
+    const nextStatus = member.accountStatus === 'inactive' ? 'active' : 'inactive'
+    const label = nextStatus === 'active' ? 'activate' : 'deactivate'
+    if (!window.confirm(`Are you sure you want to ${label} this member?`)) return
+    try {
+      const response = await updateAdminMemberStatus(member.id, nextStatus)
+      const updated = response?.user
+      setMembers((prev) =>
+        prev.map((item) =>
+          item.id === member.id
+            ? { ...item, accountStatus: updated?.account_status || nextStatus }
+            : item
+        )
+      )
+    } catch (err) {
+      alert(err?.message || 'Unable to update status.')
+    }
+  }
+
+  const handleEditMember = (member) => {
+    setEditingMember(member)
+    setMemberType(member.isUniversityMember ? 'university' : 'external')
+    setForm({
+      fullName: member.fullName,
+      email: member.email,
+      phone: member.phone,
+      password: '',
+      universityId: member.universityId || '',
+      department: member.department || '',
+      nationalId: member.nationalId || '',
+      address: member.address || '',
+      membershipType: member.membershipType || 'Monthly',
+      gender: member.gender || 'Male',
+    })
+    setShowModal(true)
   }
 
   const modalCost = useMemo(() => {
@@ -819,7 +931,10 @@ export default function AdminDashboard() {
             </div>
             <button
               type="button"
-              onClick={() => setShowModal(true)}
+              onClick={() => {
+                resetForm()
+                setShowModal(true)
+              }}
               className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 hover:shadow-lg"
             >
               + Add New Member
@@ -873,6 +988,7 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3">Plan</th>
                   <th className="px-4 py-3">Expiry</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Account</th>
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
@@ -906,19 +1022,43 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(member.id)}
-                          className="rounded-full border border-red-400/50 px-3 py-1 text-xs text-red-200 transition-all duration-200 hover:bg-red-500/10 hover:border-red-400"
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                            member.accountStatus === 'inactive'
+                              ? 'bg-slate-500/20 text-slate-200'
+                              : 'bg-emerald-500/20 text-emerald-200'
+                          }`}
                         >
-                          Delete
-                        </button>
+                          {member.accountStatus === 'inactive' ? 'Inactive' : 'Active'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEditMember(member)}
+                            className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)] transition-all duration-200 hover:border-[var(--accent)]/40"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(member)}
+                            className={`rounded-full border px-3 py-1 text-xs transition-all duration-200 ${
+                              member.accountStatus === 'inactive'
+                                ? 'border-emerald-400/60 text-emerald-200 hover:bg-emerald-500/10'
+                                : 'border-amber-400/60 text-amber-200 hover:bg-amber-500/10'
+                            }`}
+                          >
+                            {member.accountStatus === 'inactive' ? 'Activate' : 'Deactivate'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" className="py-12 text-center text-[var(--text-soft)]">
+                    <td colSpan="9" className="py-12 text-center text-[var(--text-soft)]">
                       📭 No members found matching your criteria.
                     </td>
                   </tr>
@@ -992,12 +1132,19 @@ export default function AdminDashboard() {
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-2xl">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-semibold">Add New Member</h3>
-                <p className="text-sm text-[var(--text-muted)]">Fill in the details below</p>
+                <h3 className="text-xl font-semibold">
+                  {editingMember ? 'Edit Member' : 'Add New Member'}
+                </h3>
+                <p className="text-sm text-[var(--text-muted)]">
+                  {editingMember ? 'Update member details below' : 'Fill in the details below'}
+                </p>
               </div>
               <button
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false)
+                  resetForm()
+                }}
                 className="rounded-full p-2 text-[var(--text-soft)] transition-colors hover:bg-[var(--surface)]"
               >
                 ✕
@@ -1030,7 +1177,9 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-4 rounded-2xl border border-[var(--accent)]/20 bg-[var(--accent)]/5 px-4 py-3 text-sm">
-              <span className="font-semibold">📋 Summary:</span> ID will be auto-generated · 💰 Cost: {modalCost} ETB
+              <span className="font-semibold">📋 Summary:</span>{' '}
+              {editingMember ? `ID: ${editingMember.membershipId}` : 'ID will be auto-generated'} · 💰 Cost:{' '}
+              {modalCost} ETB
             </div>
 
             <form className="mt-6 grid gap-4" onSubmit={handleAddMember}>
@@ -1071,12 +1220,16 @@ export default function AdminDashboard() {
                   ) : null}
                 </label>
                 <label className="text-sm text-[var(--text-muted)]">
-                  Default Password
+                  {editingMember ? 'Reset Password' : 'Default Password'}
                   <input
                     type="text"
                     value={form.password}
-                    readOnly
-                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2.5 text-sm font-mono"
+                    onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
+                    placeholder={editingMember ? 'Leave blank to keep current' : 'dbugym123'}
+                    readOnly={!editingMember}
+                    className={`mt-2 w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm font-mono ${
+                      editingMember ? 'bg-[var(--bg)]' : 'bg-[var(--surface-strong)]'
+                    }`}
                   />
                 </label>
 
@@ -1164,7 +1317,10 @@ export default function AdminDashboard() {
               <div className="mt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false)
+                    resetForm()
+                  }}
                   className="rounded-full border border-[var(--border)] px-5 py-2.5 text-sm transition-all duration-200 hover:border-[var(--accent)]"
                 >
                   Cancel
@@ -1173,7 +1329,7 @@ export default function AdminDashboard() {
                   type="submit"
                   className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 hover:shadow-lg"
                 >
-                  Save Member
+                  {editingMember ? 'Update Member' : 'Save Member'}
                 </button>
               </div>
             </form>
