@@ -15,7 +15,10 @@ export default function ProtectedRoute({ role }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center">
-        Loading...
+        <div className="flex flex-col items-center gap-3 text-sm text-[var(--text-muted)]">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--accent)]/40 border-t-transparent"></div>
+          Checking your session...
+        </div>
       </div>
     )
   }
