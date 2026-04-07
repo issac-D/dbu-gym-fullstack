@@ -120,42 +120,56 @@ function getMembershipCost(member) {
   return member.isUniversityMember ? base * 0.8 : base
 }
 
+// IMPROVED: Responsive LineChart that fills container properly
 function LineChart({ labels, joined, expired, pending }) {
   const uid = useId()
   const max = Math.max(...joined, ...expired, 1)
   const pendingMax = pending?.length ? Math.max(max, ...pending) : max
   const safeMax = Math.max(pendingMax, 1)
-  const chartBottom = 86
+  
+  // Dynamic bottom margin that adapts to container height
+  const chartBottom = 88
+  const chartTop = 12
+  
+  const getX = (index, length) => {
+    const padding = 32
+    return padding + (index / (length - 1 || 1)) * (100 - padding * 2)
+  }
+  
+  const getY = (value) => {
+    return chartTop + (1 - value / safeMax) * (chartBottom - chartTop)
+  }
+  
   const points = (data) =>
     data
       .map((value, index) => {
-        const x = 8 + (index / (data.length - 1 || 1)) * 84
-        const y = 8 + (1 - value / safeMax) * 78
+        const x = getX(index, data.length - 1 || 1)
+        const y = getY(value)
         return `${x},${y}`
       })
       .join(' ')
+  
   const areaPath = (data) => {
     if (!data?.length) return ''
-    const coords = data.map((value, index) => {
-      const x = 8 + (index / (data.length - 1 || 1)) * 84
-      const y = 8 + (1 - value / safeMax) * 78
-      return { x, y }
-    })
+    const coords = data.map((value, index) => ({
+      x: getX(index, data.length - 1 || 1),
+      y: getY(value)
+    }))
     const start = coords[0]
     const end = coords[coords.length - 1]
     const linePath = coords.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x},${point.y}`).join(' ')
-    return `${linePath} L${end.x},${chartBottom} L${start.x},${chartBottom} Z`
+    return `${linePath} L${end.x},${chartBottom + 4} L${start.x},${chartBottom + 4} Z`
   }
 
   return (
-    <svg viewBox="0 0 100 100" className="h-full w-full">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
       <defs>
         <linearGradient id={`${uid}-joined`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="var(--accent)" stopOpacity="1" />
           <stop offset="100%" stopColor="var(--accent-strong)" stopOpacity="0.85" />
         </linearGradient>
         <linearGradient id={`${uid}-joined-area`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.45" />
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.35" />
           <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
         </linearGradient>
         <linearGradient id={`${uid}-expired`} x1="0" y1="0" x2="1" y2="1">
@@ -167,106 +181,119 @@ function LineChart({ labels, joined, expired, pending }) {
           <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.9" />
         </linearGradient>
         <filter id={`${uid}-glow`} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="1.2" result="coloredBlur" />
+          <feGaussianBlur stdDeviation="1" result="coloredBlur" />
           <feMerge>
             <feMergeNode in="coloredBlur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
       </defs>
+      
+      {/* Grid lines */}
       {[0, 25, 50, 75, 100].map((line) => {
-        const y = 8 + (line / 100) * 78
+        const y = chartTop + (line / 100) * (chartBottom - chartTop)
         return (
-        <line
-          key={`grid-${line}`}
-          x1="8"
-          y1={y}
-          x2="92"
-          y2={y}
-          stroke="var(--border)"
-          strokeDasharray="2 3"
-          strokeWidth="0.6"
-        />
+          <line
+            key={`grid-${line}`}
+            x1="28"
+            y1={y}
+            x2="96"
+            y2={y}
+            stroke="var(--border)"
+            strokeDasharray="2 3"
+            strokeWidth="0.5"
+          />
         )
       })}
+      
+      {/* Y-axis labels */}
       {[0, 25, 50, 75, 100].map((line) => {
-        const y = 8 + (line / 100) * 78
+        const y = chartTop + (line / 100) * (chartBottom - chartTop)
         return (
-        <text
-          key={`tick-${line}`}
-          x="2"
-          y={y + 2}
-          fontSize="4"
-          fill="var(--text-soft)"
-        >
-          {Math.round((1 - line / 100) * safeMax)}
-        </text>
+          <text
+            key={`tick-${line}`}
+            x="24"
+            y={y + 1.5}
+            fontSize="3.5"
+            fill="var(--text-soft)"
+            textAnchor="end"
+          >
+            {Math.round((1 - line / 100) * safeMax)}
+          </text>
         )
       })}
-      <path
-        d={areaPath(joined)}
-        fill={`url(#${uid}-joined-area)`}
-      />
+      
+      {/* Area and lines */}
+      <path d={areaPath(joined)} fill={`url(#${uid}-joined-area)`} />
+      
       <polyline
         fill="none"
         stroke={`url(#${uid}-joined)`}
-        strokeWidth="3"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         filter={`url(#${uid}-glow)`}
         points={points(joined)}
       />
+      
       <polyline
         fill="none"
         stroke={`url(#${uid}-expired)`}
-        strokeWidth="2.6"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
         points={points(expired)}
       />
+      
       {pending?.length ? (
         <polyline
           fill="none"
           stroke={`url(#${uid}-pending)`}
-          strokeWidth="2.6"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           points={points(pending)}
         />
       ) : null}
+      
+      {/* Data points */}
       {joined.map((value, index) => {
-        const x = 8 + (index / (joined.length - 1 || 1)) * 84
-        const y = 8 + (1 - value / safeMax) * 78
+        const x = getX(index, joined.length - 1 || 1)
+        const y = getY(value)
         return (
-          <circle key={`joined-${index}`} cx={x} cy={y} r="1.8" fill="var(--accent)">
+          <circle key={`joined-${index}`} cx={x} cy={y} r="1.5" fill="var(--accent)">
             <title>{`${labels[index]} • Joined: ${value}`}</title>
           </circle>
         )
       })}
+      
       {expired.map((value, index) => {
-        const x = 8 + (index / (expired.length - 1 || 1)) * 84
-        const y = 8 + (1 - value / safeMax) * 78
+        const x = getX(index, expired.length - 1 || 1)
+        const y = getY(value)
         return (
-          <circle key={`expired-${index}`} cx={x} cy={y} r="1.6" fill="#ef4444">
+          <circle key={`expired-${index}`} cx={x} cy={y} r="1.3" fill="#ef4444">
             <title>{`${labels[index]} • Expired: ${value}`}</title>
           </circle>
         )
       })}
+      
       {pending?.map((value, index) => {
-        const x = 8 + (index / (pending.length - 1 || 1)) * 84
-        const y = 8 + (1 - value / safeMax) * 78
+        const x = getX(index, pending.length - 1 || 1)
+        const y = getY(value)
         return (
-          <circle key={`pending-${index}`} cx={x} cy={y} r="1.6" fill="#f59e0b">
+          <circle key={`pending-${index}`} cx={x} cy={y} r="1.3" fill="#f59e0b">
             <title>{`${labels[index]} • Pending: ${value}`}</title>
           </circle>
         )
       })}
+      
+      {/* X-axis labels */}
       {labels.map((label, index) => (
         <text
           key={label}
-          x={8 + (index / (labels.length - 1 || 1)) * 84}
-          y="98"
-          fontSize="4"
+          x={getX(index, labels.length - 1 || 1)}
+          y="96"
+          fontSize="3.5"
           textAnchor="middle"
           fill="var(--text-soft)"
         >
@@ -277,14 +304,18 @@ function LineChart({ labels, joined, expired, pending }) {
   )
 }
 
+// IMPROVED: DoughnutChart that scales properly
 function DoughnutChart({ uniCount, extCount }) {
   const uid = useId()
   const total = uniCount + extCount || 1
   const uniPercent = (uniCount / total) * 100
   const extPercent = 100 - uniPercent
+  const circumference = 2 * Math.PI * 14 // r=14
+  const uniDash = (uniPercent / 100) * circumference
+  const extDash = (extPercent / 100) * circumference
 
   return (
-    <svg viewBox="0 0 36 36" className="h-full w-full">
+    <svg viewBox="0 0 100 100" className="h-full w-full">
       <defs>
         <linearGradient id={`${uid}-uni`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="var(--accent)" stopOpacity="1" />
@@ -295,38 +326,67 @@ function DoughnutChart({ uniCount, extCount }) {
           <stop offset="100%" stopColor="#64748b" stopOpacity="0.9" />
         </linearGradient>
       </defs>
-      <circle
-        cx="18"
-        cy="18"
-        r="14"
-        fill="none"
-        stroke="var(--border)"
-        strokeWidth="6"
-      />
-      <circle
-        cx="18"
-        cy="18"
-        r="14"
-        fill="none"
-        stroke={`url(#${uid}-uni)`}
-        strokeWidth="6"
-        strokeDasharray={`${uniPercent} ${100 - uniPercent}`}
-        strokeDashoffset="25"
-      />
-      <circle
-        cx="18"
-        cy="18"
-        r="14"
-        fill="none"
-        stroke={`url(#${uid}-ext)`}
-        strokeWidth="6"
-        strokeDasharray={`${extPercent} ${100 - extPercent}`}
-        strokeDashoffset={`${25 + uniPercent}`}
-      />
-      <text x="18" y="20" textAnchor="middle" fontSize="7" fill="var(--text)">
-        {uniCount} / {extCount}
-      </text>
+      
+      <g transform="translate(50, 50)">
+        {/* Background circle */}
+        <circle
+          cx="0"
+          cy="0"
+          r="38"
+          fill="none"
+          stroke="var(--border)"
+          strokeWidth="10"
+        />
+        
+        {/* University segment */}
+        <circle
+          cx="0"
+          cy="0"
+          r="38"
+          fill="none"
+          stroke={`url(#${uid}-uni)`}
+          strokeWidth="10"
+          strokeDasharray={`${uniDash} ${circumference}`}
+          strokeDashoffset="0"
+          transform="rotate(-90)"
+        />
+        
+        {/* External segment */}
+        <circle
+          cx="0"
+          cy="0"
+          r="38"
+          fill="none"
+          stroke={`url(#${uid}-ext)`}
+          strokeWidth="10"
+          strokeDasharray={`${extDash} ${circumference}`}
+          strokeDashoffset={`-${uniDash}`}
+          transform="rotate(-90)"
+        />
+        
+        {/* Center text */}
+        <text x="0" y="4" textAnchor="middle" fontSize="14" fill="var(--text)" fontWeight="bold">
+          {total}
+        </text>
+        <text x="0" y="18" textAnchor="middle" fontSize="6" fill="var(--text-soft)">
+          Total
+        </text>
+      </g>
     </svg>
+  )
+}
+
+// IMPROVED: Legend component for charts
+function ChartLegend({ items }) {
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs">
+      {items.map((item) => (
+        <div key={item.label} className="flex items-center gap-1.5">
+          <div className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+          <span className="text-[var(--text-soft)]">{item.label}</span>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -587,46 +647,80 @@ export default function AdminDashboard() {
       />
 
       <main className="mx-auto w-full max-w-7xl px-6 py-10 md:px-8">
-        <h1 className="text-2xl font-semibold">Admin Overview</h1>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Admin Overview</h1>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Monitor members, revenue, and system activity
+            </p>
+          </div>
+        </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {/* Stats Cards - Improved spacing and hover effect */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {[
-            { label: 'Total Members', value: statsView.total },
-            { label: 'Active', value: statsView.active },
-            { label: 'Pending', value: statsView.pending },
-            { label: 'Approved', value: statsView.approved },
-            { label: 'Est. Revenue', value: statsView.revenue.toLocaleString() },
+            { label: 'Total Members', value: statsView.total, icon: '👥' },
+            { label: 'Active', value: statsView.active, icon: '✅' },
+            { label: 'Pending', value: statsView.pending, icon: '⏳' },
+            { label: 'Approved', value: statsView.approved, icon: '✓' },
+            { label: 'Est. Revenue', value: statsView.revenue.toLocaleString(), icon: '💰' },
           ].map((stat) => (
             <div
               key={stat.label}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center"
+              className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 transition-all duration-200 hover:border-[var(--accent)]/30 hover:shadow-lg"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
-                {stat.label}
-              </p>
-              <p className="mt-2 text-xl font-semibold">{stat.value}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
+                  {stat.label}
+                </p>
+                <span className="text-lg opacity-50">{stat.icon}</span>
+              </div>
+              <p className="mt-2 text-2xl font-semibold tracking-tight">{stat.value}</p>
             </div>
           ))}
         </div>
 
+        {/* Alerts */}
         {dashboardError ? (
-          <div className="mt-6 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-            {dashboardError}
+          <div className="mt-6 rounded-2xl border border-red-400/40 bg-red-500/10 px-5 py-3 text-sm text-red-100">
+            ⚠️ {dashboardError}
           </div>
         ) : null}
+        
         {statsView.pending > 0 ? (
-          <div className="mt-4 rounded-2xl border border-[var(--danger-border)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
-            Attention: {statsView.pending} pending members awaiting approval.
+          <div className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-3 text-sm text-amber-100">
+            🔔 Attention: {statsView.pending} pending members awaiting approval.
           </div>
         ) : null}
 
-        <section className="mt-10 grid gap-6 lg:grid-cols-[3fr_1.2fr]">
-          <div className="chart-card chart-card--primary rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-            <h2 className="text-lg font-semibold">Membership Trends (6 Months)</h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Joined vs expired vs pending members.
-            </p>
-            <div className="mt-6 h-72">
+        {/* Charts Section - IMPROVED LAYOUT with proper graph fitting */}
+        <div className="mt-10 grid gap-6 lg:grid-cols-3">
+          {/* Main Trends Chart - Takes more space */}
+          <div className="lg:col-span-2 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-all duration-200 hover:shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Membership Trends</h2>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
+                  Joined vs expired members (6 months)
+                </p>
+              </div>
+              <div className="flex gap-3 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
+                  <span className="text-[var(--text-soft)]">Joined</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                  <span className="text-[var(--text-soft)]">Expired</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                  <span className="text-[var(--text-soft)]">Pending</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 h-80 w-full">
               <LineChart
                 labels={chartData.labels}
                 joined={chartData.joined}
@@ -635,155 +729,187 @@ export default function AdminDashboard() {
               />
             </div>
           </div>
-          <div className="grid gap-6">
-            <div className="chart-card rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-              <h2 className="text-lg font-semibold">Pending Approvals (6 Months)</h2>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                Pending registrations by month.
-              </p>
-              <div className="mt-6 h-52">
-                <LineChart
-                  labels={chartData.labels}
-                  joined={chartData.pending}
-                  expired={Array(chartData.pending.length).fill(0)}
-                  pending={[]}
-                />
-              </div>
+
+          {/* User Distribution - Fits perfectly */}
+          <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-all duration-200 hover:shadow-lg">
+            <h2 className="text-lg font-semibold">User Distribution</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              University vs External members
+            </p>
+            <div className="mt-4 h-56 w-full">
+              <DoughnutChart uniCount={stats.uni} extCount={stats.ext} />
             </div>
-            <div className="chart-card rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-              <h2 className="text-lg font-semibold">User Distribution</h2>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                University vs external.
-              </p>
-              <div className="mt-6 h-48">
-                <DoughnutChart uniCount={stats.uni} extCount={stats.ext} />
+            <div className="mt-4 flex justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-[var(--accent)]" />
+                <span>University ({stats.uni})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-slate-500" />
+                <span>External ({stats.ext})</span>
               </div>
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="mt-8 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-          <h2 className="text-lg font-semibold">Financial Summary</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
-                Total Calculated (YTD)
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[var(--accent)]">
-                {statsView.revenue.toLocaleString()} ETB
-              </p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
-                Pending Members
-              </p>
-              <p className="mt-2 text-lg font-semibold text-amber-200">
-                {statsView.pending} Members
-              </p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
-                Rejected Members
-              </p>
-              <p className="mt-2 text-lg font-semibold text-red-200">
-                {statsView.rejected} Members
-              </p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-soft)]">
-                System Status
-              </p>
-              <p className="mt-2 text-lg font-semibold text-emerald-200">Online</p>
+        {/* Pending Approvals Row - Now properly aligned */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-all duration-200 hover:shadow-lg">
+            <h2 className="text-lg font-semibold">Pending Approvals</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Registrations waiting for review
+            </p>
+            <div className="mt-6 h-64 w-full">
+              <LineChart
+                labels={chartData.labels}
+                joined={chartData.pending}
+                expired={Array(chartData.pending.length).fill(0)}
+                pending={[]}
+              />
             </div>
           </div>
-        </section>
 
+          {/* Financial Summary - Enhanced design */}
+          <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-all duration-200 hover:shadow-lg">
+            <h2 className="text-lg font-semibold">Financial Summary</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Revenue and member statistics
+            </p>
+            <div className="mt-6 space-y-5">
+              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+                <span className="text-[var(--text-soft)]">Total Revenue (YTD)</span>
+                <span className="text-xl font-semibold text-[var(--accent)]">
+                  {statsView.revenue.toLocaleString()} ETB
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+                <span className="text-[var(--text-soft)]">Pending Members</span>
+                <span className="text-lg font-semibold text-amber-200">
+                  {statsView.pending}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+                <span className="text-[var(--text-soft)]">Rejected Members</span>
+                <span className="text-lg font-semibold text-red-200">
+                  {statsView.rejected}
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-[var(--text-soft)]">System Status</span>
+                <span className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                  </span>
+                  <span className="text-sm font-medium text-emerald-200">Operational</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Member Management Table - Improved styling */}
         <section id="member-management" className="mt-8 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold">Member Management</h2>
+            <div>
+              <h2 className="text-lg font-semibold">Member Management</h2>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
+                Manage and monitor all registered members
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => setShowModal(true)}
-              className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-black"
+              className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 hover:shadow-lg"
             >
-              Add New Member
+              + Add New Member
             </button>
           </div>
 
           {membersError ? (
             <div className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-              {membersError}
+              ⚠️ {membersError}
             </div>
           ) : null}
 
-          <div className="mt-4 grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
+          {/* Filters - Better spacing */}
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by ID or Name..."
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+              placeholder="🔍 Search by ID or Name..."
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
             />
             <select
               value={statusFilter}
               onChange={handleFilterChange(setStatusFilter)}
-              className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+              className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
             >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="expiring_soon">Expiring Soon</option>
-              <option value="expired">Expired</option>
+              <option value="">📊 All Statuses</option>
+              <option value="active">✅ Active</option>
+              <option value="expiring_soon">⚠️ Expiring Soon</option>
+              <option value="expired">❌ Expired</option>
             </select>
             <select
               value={typeFilter}
               onChange={handleFilterChange(setTypeFilter)}
-              className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+              className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
             >
-              <option value="">All Types</option>
-              <option value="university">University</option>
-              <option value="external">External</option>
+              <option value="">👥 All Types</option>
+              <option value="university">🎓 University</option>
+              <option value="external">🌍 External</option>
             </select>
           </div>
 
-          <div className="mt-6 overflow-x-auto">
+          {/* Table - Improved readability */}
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-[var(--border)]">
             <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase text-[var(--text-soft)]">
+              <thead className="bg-[var(--surface-strong)] text-xs uppercase text-[var(--text-soft)]">
                 <tr>
-                  <th className="py-2">ID</th>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Phone</th>
-                  <th>Plan</th>
-                  <th>Expiry</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th className="px-4 py-3">ID</th>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Phone</th>
+                  <th className="px-4 py-3">Plan</th>
+                  <th className="px-4 py-3">Expiry</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.length ? (
-                  paginated.map((member) => (
-                    <tr key={member.id} className="border-t border-[var(--border)]">
-                      <td className="py-3">{member.membershipId}</td>
-                      <td>{member.fullName}</td>
-                      <td>
-                        <span className="rounded-full border border-[var(--border)] px-2 py-1 text-xs">
-                          {member.isUniversityMember ? 'Uni' : 'Ext'}
+                  paginated.map((member, idx) => (
+                    <tr key={member.id} className={`border-t border-[var(--border)] ${idx % 2 === 0 ? 'bg-[var(--bg)]/30' : ''} transition-colors hover:bg-[var(--surface)]`}>
+                      <td className="px-4 py-3 font-mono text-xs">{member.membershipId}</td>
+                      <td className="px-4 py-3 font-medium">{member.fullName}</td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full border px-2.5 py-1 text-xs ${
+                          member.isUniversityMember 
+                            ? 'border-[var(--accent)]/30 text-[var(--accent)]' 
+                            : 'border-slate-500/30 text-slate-300'
+                        }`}>
+                          {member.isUniversityMember ? '🎓 University' : '🌍 External'}
                         </span>
                       </td>
-                      <td>{member.phone}</td>
-                      <td>{member.membershipType}</td>
-                      <td>{member.expiryDate}</td>
-                      <td>
-                        <span className={`rounded-full px-2 py-1 text-xs ${member.badge}`}>
+                      <td className="px-4 py-3 text-xs">{member.phone}</td>
+                      <td className="px-4 py-3 text-xs">{member.membershipType}</td>
+                      <td className="px-4 py-3 text-xs">{member.expiryDate}</td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${member.badge}`}>
                           {member.computedStatus === 'expiring_soon'
-                            ? 'Expiring Soon'
+                            ? '⚠️ Expiring Soon'
+                            : member.computedStatus === 'active'
+                            ? '✅ Active'
+                            : member.computedStatus === 'expired'
+                            ? '❌ Expired'
                             : member.computedStatus}
                         </span>
                       </td>
-                      <td>
+                      <td className="px-4 py-3">
                         <button
                           type="button"
                           onClick={() => handleDelete(member.id)}
-                          className="rounded-full border border-red-400/60 px-3 py-1 text-xs text-red-200"
+                          className="rounded-full border border-red-400/50 px-3 py-1 text-xs text-red-200 transition-all duration-200 hover:bg-red-500/10 hover:border-red-400"
                         >
                           Delete
                         </button>
@@ -792,8 +918,8 @@ export default function AdminDashboard() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" className="py-6 text-center text-[var(--text-soft)]">
-                      No members found matching criteria.
+                    <td colSpan="8" className="py-12 text-center text-[var(--text-soft)]">
+                      📭 No members found matching your criteria.
                     </td>
                   </tr>
                 )}
@@ -801,36 +927,58 @@ export default function AdminDashboard() {
             </table>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
+          {/* Pagination - Improved styling */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
             <button
               type="button"
               onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
-              className="rounded-full border border-[var(--border)] px-3 py-1 disabled:opacity-40"
+              className="rounded-full border border-[var(--border)] px-4 py-2 transition-all duration-200 hover:border-[var(--accent)] disabled:opacity-40 disabled:hover:border-[var(--border)]"
             >
-              Previous
+              ← Previous
             </button>
-            {Array.from({ length: totalPages }).map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => setPage(index + 1)}
-                className={`rounded-full px-3 py-1 ${
-                  page === index + 1
-                    ? 'bg-[var(--accent)] text-black'
-                    : 'border border-[var(--border)]'
-                }`}
-              >
-                {index + 1}
-              </button>
-            ))}
+            <div className="flex gap-1">
+              {Array.from({ length: Math.min(totalPages, 7) }).map((_, index) => {
+                let pageNum = index + 1
+                if (totalPages > 7 && page > 4) {
+                  if (index < 3) pageNum = index + 1
+                  else if (index === 3) pageNum = page - 1
+                  else if (index === 4) pageNum = page
+                  else if (index === 5) pageNum = page + 1
+                  else pageNum = totalPages
+                }
+                if (totalPages > 7 && page > 4 && index === 2 && pageNum !== 3) {
+                  return <span key="ellipsis1" className="px-2 py-2">...</span>
+                }
+                if (totalPages > 7 && page < totalPages - 3 && index === 5 && pageNum !== totalPages - 1) {
+                  return <span key="ellipsis2" className="px-2 py-2">...</span>
+                }
+                if (index === 0 && pageNum !== 1 && page > 4) return null
+                if (index === 6 && pageNum !== totalPages && page < totalPages - 3) return null
+                
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setPage(pageNum)}
+                    className={`min-w-[36px] rounded-full px-3 py-2 transition-all duration-200 ${
+                      page === pageNum
+                        ? 'bg-[var(--accent)] font-semibold text-black'
+                        : 'border border-[var(--border)] hover:border-[var(--accent)]'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                )
+              })}
+            </div>
             <button
               type="button"
               onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={page === totalPages}
-              className="rounded-full border border-[var(--border)] px-3 py-1 disabled:opacity-40"
+              className="rounded-full border border-[var(--border)] px-4 py-2 transition-all duration-200 hover:border-[var(--accent)] disabled:opacity-40 disabled:hover:border-[var(--border)]"
             >
-              Next
+              Next →
             </button>
           </div>
         </section>
@@ -838,15 +986,19 @@ export default function AdminDashboard() {
 
       <Footer />
 
+      {/* Modal - Same functionality, slightly improved styling */}
       {showModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-[var(--border)] bg-[var(--bg)] p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Add New Member</h3>
+              <div>
+                <h3 className="text-xl font-semibold">Add New Member</h3>
+                <p className="text-sm text-[var(--text-muted)]">Fill in the details below</p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="text-[var(--text-soft)]"
+                className="rounded-full p-2 text-[var(--text-soft)] transition-colors hover:bg-[var(--surface)]"
               >
                 ✕
               </button>
@@ -856,100 +1008,99 @@ export default function AdminDashboard() {
               <button
                 type="button"
                 onClick={() => setMemberType('university')}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold ${
+                className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
                   memberType === 'university'
                     ? 'border-[var(--accent)] bg-[var(--accent)] text-black'
-                    : 'border-[var(--border)] text-[var(--text-soft)]'
+                    : 'border-[var(--border)] text-[var(--text-soft)] hover:border-[var(--accent)]'
                 }`}
               >
-                University Member
+                🎓 University Member
               </button>
               <button
                 type="button"
                 onClick={() => setMemberType('external')}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold ${
+                className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
                   memberType === 'external'
                     ? 'border-[var(--accent)] bg-[var(--accent)] text-black'
-                    : 'border-[var(--border)] text-[var(--text-soft)]'
+                    : 'border-[var(--border)] text-[var(--text-soft)] hover:border-[var(--accent)]'
                 }`}
               >
-                External Member
+                🌍 External Member
               </button>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm">
-              <span className="font-semibold">ID:</span> Auto-generated ·{' '}
-              <span className="font-semibold">Cost:</span> {modalCost} ETB
+            <div className="mt-4 rounded-2xl border border-[var(--accent)]/20 bg-[var(--accent)]/5 px-4 py-3 text-sm">
+              <span className="font-semibold">📋 Summary:</span> ID will be auto-generated · 💰 Cost: {modalCost} ETB
             </div>
 
-            <form className="mt-4 grid gap-4" onSubmit={handleAddMember}>
+            <form className="mt-6 grid gap-4" onSubmit={handleAddMember}>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-[var(--text-muted)]">
-                  Full Name
+                  Full Name *
                   <input
                     type="text"
                     value={form.fullName}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, fullName: event.target.value.replace(/[0-9]/g, '') }))
                     }
-                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                     required
                   />
                 </label>
                 <label className="text-sm text-[var(--text-muted)]">
-                  Email
+                  Email *
                   <input
                     type="email"
                     value={form.email}
                     onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
-                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                     required
                   />
                 </label>
                 <label className="text-sm text-[var(--text-muted)]">
-                  Phone
+                  Phone *
                   <input
                     type="tel"
                     value={form.phone}
                     onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value.replace(/[^0-9+]/g, '') }))}
-                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                     required
                   />
                   {phoneError ? (
-                    <span className="text-xs text-red-200">{phoneError}</span>
+                    <span className="mt-1 block text-xs text-red-200">{phoneError}</span>
                   ) : null}
                 </label>
                 <label className="text-sm text-[var(--text-muted)]">
-                  Default Pass
+                  Default Password
                   <input
                     type="text"
                     value={form.password}
                     readOnly
-                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-sm"
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2.5 text-sm font-mono"
                   />
                 </label>
 
                 {memberType === 'university' ? (
                   <>
                     <label className="text-sm text-[var(--text-muted)]">
-                      University ID
+                      University ID *
                       <input
                         type="text"
                         value={form.universityId}
                         onChange={(event) => setForm((prev) => ({ ...prev, universityId: event.target.value }))}
-                        className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                        className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                         required
                       />
                     </label>
                     <label className="text-sm text-[var(--text-muted)]">
-                      Department
+                      Department *
                       <input
                         type="text"
                         value={form.department}
                         onChange={(event) =>
                           setForm((prev) => ({ ...prev, department: event.target.value.replace(/[0-9]/g, '') }))
                         }
-                        className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                        className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                         required
                       />
                     </label>
@@ -957,7 +1108,7 @@ export default function AdminDashboard() {
                 ) : (
                   <>
                     <label className="text-sm text-[var(--text-muted)]">
-                      National ID (16 digits)
+                      National ID (16 digits) *
                       <input
                         type="text"
                         value={form.nationalId}
@@ -967,17 +1118,17 @@ export default function AdminDashboard() {
                             nationalId: event.target.value.replace(/\D/g, '').slice(0, 16),
                           }))
                         }
-                        className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                        className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                         required
                       />
                     </label>
                     <label className="text-sm text-[var(--text-muted)]">
-                      Address
+                      Address *
                       <input
                         type="text"
                         value={form.address}
                         onChange={(event) => setForm((prev) => ({ ...prev, address: event.target.value }))}
-                        className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                        className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                         required
                       />
                     </label>
@@ -985,42 +1136,42 @@ export default function AdminDashboard() {
                 )}
 
                 <label className="text-sm text-[var(--text-muted)]">
-                  Plan
+                  Membership Plan *
                   <select
                     value={form.membershipType}
                     onChange={(event) => setForm((prev) => ({ ...prev, membershipType: event.target.value }))}
-                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                   >
-                    <option value="Monthly">Monthly</option>
-                    <option value="3Months">3 Months</option>
-                    <option value="6Months">6 Months</option>
-                    <option value="1Year">1 Year</option>
+                    <option value="Monthly">📅 Monthly - 300 ETB</option>
+                    <option value="3Months">📅 3 Months - 800 ETB</option>
+                    <option value="6Months">📅 6 Months - 1500 ETB</option>
+                    <option value="1Year">📅 1 Year - 2500 ETB</option>
                   </select>
                 </label>
                 <label className="text-sm text-[var(--text-muted)]">
-                  Gender
+                  Gender *
                   <select
                     value={form.gender}
                     onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
-                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm transition-all duration-200 focus:border-[var(--accent)] focus:outline-none"
                   >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                    <option value="Male">👨 Male</option>
+                    <option value="Female">👩 Female</option>
                   </select>
                 </label>
               </div>
 
-              <div className="mt-2 flex items-center justify-end gap-3">
+              <div className="mt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-full border border-[var(--border)] px-4 py-2 text-sm"
+                  className="rounded-full border border-[var(--border)] px-5 py-2.5 text-sm transition-all duration-200 hover:border-[var(--accent)]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-black"
+                  className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 hover:shadow-lg"
                 >
                   Save Member
                 </button>
