@@ -25,7 +25,8 @@ export function AuthProvider({ children }) {
       } catch {
         if (active) {
           setUser(null)
-          setSessionExpired(true)
+          const hadRole = !!window.localStorage.getItem('dbu-last-role')
+          setSessionExpired(hadRole)
         }
       } finally {
         if (active) setLoading(false)
@@ -51,7 +52,8 @@ export function AuthProvider({ children }) {
       return data.user
     } catch {
       setUser(null)
-      setSessionExpired(true)
+      const hadRole = !!window.localStorage.getItem('dbu-last-role')
+      setSessionExpired(hadRole)
       window.localStorage.removeItem('dbu-last-role')
       return null
     } finally {

@@ -71,6 +71,7 @@ export default function Login() {
   const [email, setEmail] = useState('member@dbugym.com')
   const [password, setPassword] = useState('Dbu@1234')
   const [touched, setTouched] = useState({ email: false, password: false })
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -151,7 +152,7 @@ export default function Login() {
                 }`}>
                   <LockIcon className="h-5 w-5 text-[var(--accent)]" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
                     placeholder="••••••••"
                     value={password}
@@ -160,6 +161,14 @@ export default function Login() {
                     disabled={submitting}
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="text-xs text-[var(--accent)]"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
                 </div>
                 {touched.password && !password ? (
                   <span className="mt-2 block text-xs text-red-200">Password is required.</span>

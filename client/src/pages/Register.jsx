@@ -88,6 +88,7 @@ export default function Register() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [step, setStep] = useState(1)
   const [memberType, setMemberType] = useState('university')
   const [avatarFile, setAvatarFile] = useState(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -232,6 +233,40 @@ export default function Register() {
     }
   }
 
+  const stepLabels = ['Account', 'Membership', 'Profile']
+
+  const canProceedStep = () => {
+    if (step === 1) {
+      return (
+        formValues.name &&
+        formValues.email &&
+        formValues.password &&
+        formValues.password_confirmation &&
+        passwordStrong &&
+        formValues.password === formValues.password_confirmation
+      )
+    }
+    if (step === 2) {
+      if (!formValues.phone || getPhoneError(formValues.phone)) return false
+      if (!formValues.gender || !formValues.membership_type) return false
+      if (isUniversity) {
+        return !!formValues.university_id && !!formValues.department
+      }
+      return !!formValues.national_id && !!formValues.address
+    }
+    return true
+  }
+
+  const handleNext = () => {
+    setSubmitted(true)
+    if (!canProceedStep()) return
+    setStep((prev) => Math.min(prev + 1, 3))
+  }
+
+  const handleBack = () => {
+    setStep((prev) => Math.max(prev - 1, 1))
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-25" />
@@ -253,6 +288,38 @@ export default function Register() {
           </div>
 
           <div className="glass-panel rounded-3xl p-6 shadow-2xl md:p-8">
+            <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="uppercase tracking-[0.3em] text-white/40">Registration Steps</span>
+                <span className="text-[var(--accent)]">Step {step} of 3</span>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                {stepLabels.map((label, index) => {
+                  const current = index + 1
+                  const active = step >= current
+                  return (
+                    <div key={label} className="flex flex-1 items-center gap-2">
+                      <div
+                        className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold ${
+                          active
+                            ? 'border-[var(--accent)] bg-[var(--accent)] text-black'
+                            : 'border-white/20 text-white/50'
+                        }`}
+                      >
+                        {current}
+                      </div>
+                      <span className={`text-xs ${active ? 'text-white' : 'text-white/50'}`}>
+                        {label}
+                      </span>
+                      {index < stepLabels.length - 1 ? (
+                        <div className="mx-2 h-px flex-1 bg-white/10"></div>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
                 <div className="flex items-center justify-between">
@@ -273,6 +340,7 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setMemberType('university')}
+                  disabled={submitting}
                   className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
                     isUniversity
                       ? 'bg-[var(--accent)] text-black'
@@ -284,6 +352,7 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setMemberType('external')}
+                  disabled={submitting}
                   className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
                     !isUniversity
                       ? 'bg-[var(--accent)] text-black'
@@ -294,256 +363,291 @@ export default function Register() {
                 </button>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="block text-sm text-white/70">
-                  Full Name
-                  <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
-                    submitted && !formValues.name ? 'border-red-400/60' : 'border-white/20'
-                  }`}>
-                    <UserIcon className="h-5 w-5 text-[var(--accent)]" />
-                    <input
-                      type="text"
-                      name="name"
-                      value={formValues.name}
+              {step === 1 ? (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="block text-sm text-white/70">
+                      Full Name
+                      <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                        submitted && !formValues.name ? 'border-red-400/60' : 'border-white/20'
+                      }`}>
+                        <UserIcon className="h-5 w-5 text-[var(--accent)]" />
+                        <input
+                          type="text"
+                          name="name"
+                          value={formValues.name}
+                          onChange={handleChange}
+                          disabled={submitting}
+                          placeholder="Your name"
+                          className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                        />
+                      </div>
+                      {submitted && !formValues.name ? (
+                        <span className="mt-2 block text-xs text-red-200">Full name is required.</span>
+                      ) : null}
+                    </label>
+
+                    <label className="block text-sm text-white/70">
+                      Email Address
+                      <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                        submitted && !formValues.email ? 'border-red-400/60' : 'border-white/20'
+                      }`}>
+                        <MailIcon className="h-5 w-5 text-[var(--accent)]" />
+                        <input
+                          type="email"
+                          name="email"
+                          value={formValues.email}
+                          onChange={handleChange}
+                          disabled={submitting}
+                          placeholder="you@example.com"
+                          className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                        />
+                      </div>
+                      {submitted && !formValues.email ? (
+                        <span className="mt-2 block text-xs text-red-200">Email is required.</span>
+                      ) : null}
+                    </label>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="block text-sm text-white/70">
+                      Password
+                      <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                        submitted && !formValues.password ? 'border-red-400/60' : 'border-white/20'
+                      }`}>
+                        <LockIcon className="h-5 w-5 text-[var(--accent)]" />
+                        <input
+                          type="password"
+                          name="password"
+                          value={formValues.password}
+                          onChange={(event) => {
+                            setPasswordTouched(true)
+                            handleChange(event)
+                          }}
+                          placeholder="••••••••"
+                          disabled={submitting}
+                          className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                        />
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                        <span className={`flex items-center gap-1 ${hasMinLength ? 'text-emerald-300' : 'text-red-300'}`}>
+                          <span className="h-2 w-2 rounded-full bg-current"></span> 8+ chars
+                        </span>
+                        <span className={`flex items-center gap-1 ${hasNumberOrSymbol ? 'text-emerald-300' : 'text-red-300'}`}>
+                          <span className="h-2 w-2 rounded-full bg-current"></span> Number & symbol
+                        </span>
+                      </div>
+                    </label>
+                    <label className="block text-sm text-white/70">
+                      Confirm Password
+                      <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                        submitted && (!formValues.password_confirmation || formValues.password_confirmation !== formValues.password)
+                          ? 'border-red-400/60'
+                          : 'border-white/20'
+                      }`}>
+                        <LockIcon className="h-5 w-5 text-[var(--accent)]" />
+                        <input
+                          type="password"
+                          name="password_confirmation"
+                          value={formValues.password_confirmation}
+                          onChange={handleChange}
+                          disabled={submitting}
+                          placeholder="••••••••"
+                          className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                        />
+                      </div>
+                      {submitted && formValues.password_confirmation && formValues.password_confirmation !== formValues.password ? (
+                        <span className="mt-2 block text-xs text-red-200">Passwords do not match.</span>
+                      ) : null}
+                    </label>
+                  </div>
+                </>
+              ) : null}
+
+              {step === 2 ? (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="block text-sm text-white/70">
+                      Phone Number
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formValues.phone}
+                        onChange={handleChange}
+                        disabled={submitting}
+                        placeholder="09... or +251..."
+                        className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                          submitted && (!formValues.phone || phoneError) ? 'border-red-400/60' : 'border-white/20'
+                        }`}
+                      />
+                      {phoneError ? (
+                        <span className="mt-2 block text-xs text-red-300">{phoneError}</span>
+                      ) : null}
+                    </label>
+                    <label className="block text-sm text-white/70">
+                      Gender
+                      <select
+                        name="gender"
+                        value={formValues.gender}
+                        onChange={handleChange}
+                        disabled={submitting}
+                        className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white focus:outline-none"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label className="block text-sm text-white/70">
+                    Membership Plan
+                    <select
+                      name="membership_type"
+                      value={formValues.membership_type}
                       onChange={handleChange}
                       disabled={submitting}
-                      placeholder="Your name"
-                      className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
-                    />
-                  </div>
-                  {submitted && !formValues.name ? (
-                    <span className="mt-2 block text-xs text-red-200">Full name is required.</span>
-                  ) : null}
-                </label>
+                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white focus:outline-none ${
+                        submitted && !formValues.membership_type ? 'border-red-400/60' : 'border-white/20'
+                      }`}
+                    >
+                      <option value="">Select Plan Duration</option>
+                      <option value="Monthly">Monthly</option>
+                      <option value="3Months">3 Months</option>
+                      <option value="6Months">6 Months</option>
+                      <option value="1Year">1 Year</option>
+                    </select>
+                  </label>
 
-                <label className="block text-sm text-white/70">
-                  Email Address
-                  <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
-                    submitted && !formValues.email ? 'border-red-400/60' : 'border-white/20'
-                  }`}>
-                    <MailIcon className="h-5 w-5 text-[var(--accent)]" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formValues.email}
-                      onChange={handleChange}
-                      disabled={submitting}
-                      placeholder="you@example.com"
-                      className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
-                    />
-                  </div>
-                  {submitted && !formValues.email ? (
-                    <span className="mt-2 block text-xs text-red-200">Email is required.</span>
-                  ) : null}
-                </label>
-              </div>
+                  {isUniversity ? (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="block text-sm text-white/70">
+                        University ID
+                        <input
+                          type="text"
+                          name="university_id"
+                          value={formValues.university_id}
+                          onChange={handleChange}
+                          disabled={submitting}
+                          className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                            submitted && isUniversity && !formValues.university_id ? 'border-red-400/60' : 'border-white/20'
+                          }`}
+                        />
+                      </label>
+                      <label className="block text-sm text-white/70">
+                        Department/College
+                        <input
+                          type="text"
+                          name="department"
+                          value={formValues.department}
+                          onChange={handleChange}
+                          disabled={submitting}
+                          className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                            submitted && isUniversity && !formValues.department ? 'border-red-400/60' : 'border-white/20'
+                          }`}
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="block text-sm text-white/70">
+                        National ID / Passport
+                        <input
+                          type="text"
+                          name="national_id"
+                          value={formValues.national_id}
+                          onChange={handleChange}
+                          disabled={submitting}
+                          className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                            submitted && !isUniversity && !formValues.national_id ? 'border-red-400/60' : 'border-white/20'
+                          }`}
+                        />
+                      </label>
+                      <label className="block text-sm text-white/70">
+                        Address
+                        <input
+                          type="text"
+                          name="address"
+                          value={formValues.address}
+                          onChange={handleChange}
+                          disabled={submitting}
+                          className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                            submitted && !isUniversity && !formValues.address ? 'border-red-400/60' : 'border-white/20'
+                          }`}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </>
+              ) : null}
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="block text-sm text-white/70">
-                  Password
-                  <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
-                    submitted && !formValues.password ? 'border-red-400/60' : 'border-white/20'
-                  }`}>
-                    <LockIcon className="h-5 w-5 text-[var(--accent)]" />
+              {step === 3 ? (
+                <>
+                  <label className="block text-sm text-white/70">
+                    Profile Picture
                     <input
-                      type="password"
-                      name="password"
-                      value={formValues.password}
-                      onChange={(event) => {
-                        setPasswordTouched(true)
-                        handleChange(event)
-                      }}
-                      placeholder="••••••••"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
                       disabled={submitting}
-                      className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-[var(--accent)] file:px-3 file:py-1 file:text-xs file:font-semibold file:text-black"
                     />
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                    <span className={`flex items-center gap-1 ${hasMinLength ? 'text-emerald-300' : 'text-red-300'}`}>
-                      <span className="h-2 w-2 rounded-full bg-current"></span> 8+ chars
-                    </span>
-                    <span className={`flex items-center gap-1 ${hasNumberOrSymbol ? 'text-emerald-300' : 'text-red-300'}`}>
-                      <span className="h-2 w-2 rounded-full bg-current"></span> Number & symbol
-                    </span>
-                  </div>
-                </label>
-                <label className="block text-sm text-white/70">
-                  Confirm Password
-                  <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
-                    submitted && (!formValues.password_confirmation || formValues.password_confirmation !== formValues.password)
-                      ? 'border-red-400/60'
-                      : 'border-white/20'
-                  }`}>
-                    <LockIcon className="h-5 w-5 text-[var(--accent)]" />
-                    <input
-                      type="password"
-                      name="password_confirmation"
-                      value={formValues.password_confirmation}
-                      onChange={handleChange}
-                      disabled={submitting}
-                      placeholder="••••••••"
-                      className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
-                    />
-                  </div>
-                  {submitted && formValues.password_confirmation && formValues.password_confirmation !== formValues.password ? (
-                    <span className="mt-2 block text-xs text-red-200">Passwords do not match.</span>
-                  ) : null}
-                </label>
-              </div>
+                  </label>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="block text-sm text-white/70">
-                  Phone Number
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formValues.phone}
-                    onChange={handleChange}
+                  <label className="flex items-center gap-2 text-xs text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(event) => setTermsAccepted(event.target.checked)}
+                      disabled={submitting}
+                      className="h-4 w-4 rounded border-white/30 bg-black/40 text-[var(--accent)]"
+                    />
+                    I agree to the{' '}
+                    <Link to="/terms" className="text-[var(--accent)] hover:underline">
+                      terms and conditions
+                    </Link>
+                    .
+                  </label>
+                </>
+              ) : null}
+
+              <div className="flex flex-wrap items-center gap-3">
+                {step > 1 ? (
+                  <button
+                    type="button"
+                    onClick={handleBack}
                     disabled={submitting}
-                    placeholder="09... or +251..."
-                    className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
-                      submitted && (!formValues.phone || phoneError) ? 'border-red-400/60' : 'border-white/20'
-                    }`}
-                  />
-                  {phoneError ? (
-                    <span className="mt-2 block text-xs text-red-300">{phoneError}</span>
-                  ) : null}
-                </label>
-                <label className="block text-sm text-white/70">
-                  Gender
-                  <select
-                    name="gender"
-                    value={formValues.gender}
-                    onChange={handleChange}
-                    disabled={submitting}
-                    className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white focus:outline-none"
+                    className="flex-1 rounded-full border border-white/20 px-4 py-3 text-sm font-semibold text-white/70 transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </label>
-              </div>
-
-              <label className="block text-sm text-white/70">
-                Membership Plan
-                <select
-                  name="membership_type"
-                  value={formValues.membership_type}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white focus:outline-none ${
-                    submitted && !formValues.membership_type ? 'border-red-400/60' : 'border-white/20'
-                  }`}
-                >
-                  <option value="">Select Plan Duration</option>
-                  <option value="Monthly">Monthly</option>
-                  <option value="3Months">3 Months</option>
-                  <option value="6Months">6 Months</option>
-                  <option value="1Year">1 Year</option>
-                </select>
-              </label>
-
-              {isUniversity ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block text-sm text-white/70">
-                    University ID
-                    <input
-                      type="text"
-                      name="university_id"
-                      value={formValues.university_id}
-                      onChange={handleChange}
-                      disabled={submitting}
-                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
-                        submitted && isUniversity && !formValues.university_id ? 'border-red-400/60' : 'border-white/20'
-                      }`}
-                    />
-                  </label>
-                  <label className="block text-sm text-white/70">
-                    Department/College
-                    <input
-                      type="text"
-                      name="department"
-                      value={formValues.department}
-                      onChange={handleChange}
-                      disabled={submitting}
-                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
-                        submitted && isUniversity && !formValues.department ? 'border-red-400/60' : 'border-white/20'
-                      }`}
-                    />
-                  </label>
-                </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block text-sm text-white/70">
-                    National ID / Passport
-                    <input
-                      type="text"
-                      name="national_id"
-                      value={formValues.national_id}
-                      onChange={handleChange}
-                      disabled={submitting}
-                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
-                        submitted && !isUniversity && !formValues.national_id ? 'border-red-400/60' : 'border-white/20'
-                      }`}
-                    />
-                  </label>
-                  <label className="block text-sm text-white/70">
-                    Address
-                    <input
-                      type="text"
-                      name="address"
-                      value={formValues.address}
-                      onChange={handleChange}
-                      disabled={submitting}
-                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
-                        submitted && !isUniversity && !formValues.address ? 'border-red-400/60' : 'border-white/20'
-                      }`}
-                    />
-                  </label>
-                </div>
-              )}
-
-              <label className="block text-sm text-white/70">
-                Profile Picture
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  disabled={submitting}
-                  className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-[var(--accent)] file:px-3 file:py-1 file:text-xs file:font-semibold file:text-black"
-                />
-              </label>
-
-              <label className="flex items-center gap-2 text-xs text-white/70">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={(event) => setTermsAccepted(event.target.checked)}
-                  disabled={submitting}
-                  className="h-4 w-4 rounded border-white/30 bg-black/40 text-[var(--accent)]"
-                />
-                I agree to the{' '}
-                <Link to="/terms" className="text-[var(--accent)] hover:underline">
-                  terms and conditions
-                </Link>
-                .
-              </label>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {submitting ? (
-                  <span className="inline-flex items-center justify-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/60 border-t-transparent"></span>
-                    Submitting…
-                  </span>
+                    Back
+                  </button>
+                ) : null}
+                {step < 3 ? (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={submitting}
+                    className="flex-1 rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    Next
+                  </button>
                 ) : (
-                  submitLabel
+                  <button
+                    type="submit"
+                    disabled={submitting || !termsAccepted}
+                    className="flex-1 rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {submitting ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/60 border-t-transparent"></span>
+                        Submitting…
+                      </span>
+                    ) : (
+                      submitLabel
+                    )}
+                  </button>
                 )}
-              </button>
+              </div>
             </form>
 
             {error ? (
