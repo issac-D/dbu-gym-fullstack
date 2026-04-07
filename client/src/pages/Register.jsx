@@ -433,10 +433,10 @@ export default function Register() {
                         <button
                           type="button"
                           onClick={() => setShowPassword((prev) => !prev)}
-                          className="text-xs text-[var(--accent)]"
+                          className="text-[var(--accent)]"
                           aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showPassword ? 'Hide' : 'Show'}
+                          <i className={showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'}></i>
                         </button>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-3 text-xs">
@@ -468,10 +468,10 @@ export default function Register() {
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword((prev) => !prev)}
-                          className="text-xs text-[var(--accent)]"
+                          className="text-[var(--accent)]"
                           aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showConfirmPassword ? 'Hide' : 'Show'}
+                          <i className={showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'}></i>
                         </button>
                       </div>
                       {submitted && formValues.password_confirmation && formValues.password_confirmation !== formValues.password ? (
