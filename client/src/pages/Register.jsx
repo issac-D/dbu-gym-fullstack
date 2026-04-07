@@ -87,6 +87,7 @@ export default function Register() {
   const { register } = useAuth()
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const [memberType, setMemberType] = useState('university')
   const [avatarFile, setAvatarFile] = useState(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -165,6 +166,7 @@ export default function Register() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setSubmitted(true)
     const payload = {
       ...formValues,
       member_type: memberType,
@@ -295,39 +297,53 @@ export default function Register() {
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block text-sm text-white/70">
                   Full Name
-                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                  <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                    submitted && !formValues.name ? 'border-red-400/60' : 'border-white/20'
+                  }`}>
                     <UserIcon className="h-5 w-5 text-[var(--accent)]" />
                     <input
                       type="text"
                       name="name"
                       value={formValues.name}
                       onChange={handleChange}
+                      disabled={submitting}
                       placeholder="Your name"
                       className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                     />
                   </div>
+                  {submitted && !formValues.name ? (
+                    <span className="mt-2 block text-xs text-red-200">Full name is required.</span>
+                  ) : null}
                 </label>
 
                 <label className="block text-sm text-white/70">
                   Email Address
-                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                  <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                    submitted && !formValues.email ? 'border-red-400/60' : 'border-white/20'
+                  }`}>
                     <MailIcon className="h-5 w-5 text-[var(--accent)]" />
                     <input
                       type="email"
                       name="email"
                       value={formValues.email}
                       onChange={handleChange}
+                      disabled={submitting}
                       placeholder="you@example.com"
                       className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                     />
                   </div>
+                  {submitted && !formValues.email ? (
+                    <span className="mt-2 block text-xs text-red-200">Email is required.</span>
+                  ) : null}
                 </label>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block text-sm text-white/70">
                   Password
-                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                  <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                    submitted && !formValues.password ? 'border-red-400/60' : 'border-white/20'
+                  }`}>
                     <LockIcon className="h-5 w-5 text-[var(--accent)]" />
                     <input
                       type="password"
@@ -338,6 +354,7 @@ export default function Register() {
                         handleChange(event)
                       }}
                       placeholder="••••••••"
+                      disabled={submitting}
                       className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                     />
                   </div>
@@ -352,17 +369,25 @@ export default function Register() {
                 </label>
                 <label className="block text-sm text-white/70">
                   Confirm Password
-                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                  <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                    submitted && (!formValues.password_confirmation || formValues.password_confirmation !== formValues.password)
+                      ? 'border-red-400/60'
+                      : 'border-white/20'
+                  }`}>
                     <LockIcon className="h-5 w-5 text-[var(--accent)]" />
                     <input
                       type="password"
                       name="password_confirmation"
                       value={formValues.password_confirmation}
                       onChange={handleChange}
+                      disabled={submitting}
                       placeholder="••••••••"
                       className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                     />
                   </div>
+                  {submitted && formValues.password_confirmation && formValues.password_confirmation !== formValues.password ? (
+                    <span className="mt-2 block text-xs text-red-200">Passwords do not match.</span>
+                  ) : null}
                 </label>
               </div>
 
@@ -374,8 +399,11 @@ export default function Register() {
                     name="phone"
                     value={formValues.phone}
                     onChange={handleChange}
+                    disabled={submitting}
                     placeholder="09... or +251..."
-                    className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                      submitted && (!formValues.phone || phoneError) ? 'border-red-400/60' : 'border-white/20'
+                    }`}
                   />
                   {phoneError ? (
                     <span className="mt-2 block text-xs text-red-300">{phoneError}</span>
@@ -387,6 +415,7 @@ export default function Register() {
                     name="gender"
                     value={formValues.gender}
                     onChange={handleChange}
+                    disabled={submitting}
                     className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white focus:outline-none"
                   >
                     <option value="">Select Gender</option>
@@ -402,7 +431,10 @@ export default function Register() {
                   name="membership_type"
                   value={formValues.membership_type}
                   onChange={handleChange}
-                  className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white focus:outline-none"
+                  disabled={submitting}
+                  className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white focus:outline-none ${
+                    submitted && !formValues.membership_type ? 'border-red-400/60' : 'border-white/20'
+                  }`}
                 >
                   <option value="">Select Plan Duration</option>
                   <option value="Monthly">Monthly</option>
@@ -421,7 +453,10 @@ export default function Register() {
                       name="university_id"
                       value={formValues.university_id}
                       onChange={handleChange}
-                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                      disabled={submitting}
+                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                        submitted && isUniversity && !formValues.university_id ? 'border-red-400/60' : 'border-white/20'
+                      }`}
                     />
                   </label>
                   <label className="block text-sm text-white/70">
@@ -431,7 +466,10 @@ export default function Register() {
                       name="department"
                       value={formValues.department}
                       onChange={handleChange}
-                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                      disabled={submitting}
+                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                        submitted && isUniversity && !formValues.department ? 'border-red-400/60' : 'border-white/20'
+                      }`}
                     />
                   </label>
                 </div>
@@ -444,7 +482,10 @@ export default function Register() {
                       name="national_id"
                       value={formValues.national_id}
                       onChange={handleChange}
-                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                      disabled={submitting}
+                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                        submitted && !isUniversity && !formValues.national_id ? 'border-red-400/60' : 'border-white/20'
+                      }`}
                     />
                   </label>
                   <label className="block text-sm text-white/70">
@@ -454,7 +495,10 @@ export default function Register() {
                       name="address"
                       value={formValues.address}
                       onChange={handleChange}
-                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                      disabled={submitting}
+                      className={`mt-2 w-full rounded-2xl border bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none ${
+                        submitted && !isUniversity && !formValues.address ? 'border-red-400/60' : 'border-white/20'
+                      }`}
                     />
                   </label>
                 </div>
@@ -466,6 +510,7 @@ export default function Register() {
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
+                  disabled={submitting}
                   className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-[var(--accent)] file:px-3 file:py-1 file:text-xs file:font-semibold file:text-black"
                 />
               </label>
@@ -475,6 +520,7 @@ export default function Register() {
                   type="checkbox"
                   checked={termsAccepted}
                   onChange={(event) => setTermsAccepted(event.target.checked)}
+                  disabled={submitting}
                   className="h-4 w-4 rounded border-white/30 bg-black/40 text-[var(--accent)]"
                 />
                 I agree to the{' '}
@@ -489,13 +535,20 @@ export default function Register() {
                 disabled={submitting}
                 className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {submitLabel}
+                {submitting ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/60 border-t-transparent"></span>
+                    Submitting…
+                  </span>
+                ) : (
+                  submitLabel
+                )}
               </button>
             </form>
 
             {error ? (
               <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-100">
-                {error}
+                <span className="font-semibold">Registration error:</span> {error}
               </div>
             ) : null}
 

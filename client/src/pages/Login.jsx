@@ -68,14 +68,16 @@ export default function Login() {
   const { login } = useAuth()
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [email, setEmail] = useState('member@dbugym.com')
+  const [password, setPassword] = useState('Dbu@1234')
+  const [touched, setTouched] = useState({ email: false, password: false })
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    const form = event.currentTarget
-    const email = form.elements.email?.value?.trim()
-    const password = form.elements.password?.value
+    const trimmedEmail = email.trim()
 
-    if (!email || !password) {
+    if (!trimmedEmail || !password) {
+      setTouched({ email: true, password: true })
       setError('Please enter your email and password.')
       return
     }
@@ -84,7 +86,7 @@ export default function Login() {
     setSubmitting(true)
 
     try {
-      const user = await login({ email, password })
+      const user = await login({ email: trimmedEmail, password })
       const resolvedRole = user?.role === 'admin' ? 'admin' : 'member'
       navigate(resolvedRole === 'admin' ? '/admin/dashboard' : '/members/dashboard')
     } catch (err) {
@@ -118,30 +120,50 @@ export default function Login() {
             <form className="space-y-5" onSubmit={handleSubmit}>
               <label className="block text-sm text-white/70">
                 Email Address
-                <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                  touched.email && !email.trim()
+                    ? 'border-red-400/60'
+                    : 'border-white/20'
+                }`}>
                   <MailIcon className="h-5 w-5 text-[var(--accent)]" />
                   <input
                     type="email"
                     name="email"
                     placeholder="you@example.com"
-                    defaultValue="member@dbugym.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+                    disabled={submitting}
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
                 </div>
+                {touched.email && !email.trim() ? (
+                  <span className="mt-2 block text-xs text-red-200">Email is required.</span>
+                ) : null}
               </label>
 
               <label className="block text-sm text-white/70">
                 Password
-                <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white">
+                <div className={`mt-2 flex items-center gap-3 rounded-2xl border bg-black/40 px-4 py-3 text-white ${
+                  touched.password && !password
+                    ? 'border-red-400/60'
+                    : 'border-white/20'
+                }`}>
                   <LockIcon className="h-5 w-5 text-[var(--accent)]" />
                   <input
                     type="password"
                     name="password"
                     placeholder="••••••••"
-                    defaultValue="Dbu@1234"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+                    disabled={submitting}
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                   />
                 </div>
+                {touched.password && !password ? (
+                  <span className="mt-2 block text-xs text-red-200">Password is required.</span>
+                ) : null}
               </label>
 
               <button
@@ -149,13 +171,20 @@ export default function Login() {
                 disabled={submitting}
                 className="w-full rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_var(--accent-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {submitting ? 'Signing in…' : 'Log In'}
+                {submitting ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/60 border-t-transparent"></span>
+                    Signing in…
+                  </span>
+                ) : (
+                  'Log In'
+                )}
               </button>
             </form>
 
             {error ? (
               <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-100">
-                {error}
+                <span className="font-semibold">Login error:</span> {error}
               </div>
             ) : null}
 
