@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
-import { getAdminDashboard } from '../../lib/api'
+import { getAdminDashboard, getAdminMembers } from '../../lib/api'
 
 const priceMap = {
   Monthly: 300,
@@ -121,9 +121,11 @@ function getMembershipCost(member) {
 }
 
 function LineChart({ labels, joined, expired, pending }) {
+  const uid = useId()
   const max = Math.max(...joined, ...expired, 1)
   const pendingMax = pending?.length ? Math.max(max, ...pending) : max
   const safeMax = Math.max(pendingMax, 1)
+  const chartBottom = 86
   const points = (data) =>
     data
       .map((value, index) => {
@@ -132,9 +134,46 @@ function LineChart({ labels, joined, expired, pending }) {
         return `${x},${y}`
       })
       .join(' ')
+  const areaPath = (data) => {
+    if (!data?.length) return ''
+    const coords = data.map((value, index) => {
+      const x = 8 + (index / (data.length - 1 || 1)) * 84
+      const y = 8 + (1 - value / safeMax) * 78
+      return { x, y }
+    })
+    const start = coords[0]
+    const end = coords[coords.length - 1]
+    const linePath = coords.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x},${point.y}`).join(' ')
+    return `${linePath} L${end.x},${chartBottom} L${start.x},${chartBottom} Z`
+  }
 
   return (
     <svg viewBox="0 0 100 100" className="h-full w-full">
+      <defs>
+        <linearGradient id={`${uid}-joined`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="1" />
+          <stop offset="100%" stopColor="var(--accent-strong)" stopOpacity="0.85" />
+        </linearGradient>
+        <linearGradient id={`${uid}-joined-area`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id={`${uid}-expired`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fca5a5" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#ef4444" stopOpacity="0.9" />
+        </linearGradient>
+        <linearGradient id={`${uid}-pending`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fde68a" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.9" />
+        </linearGradient>
+        <filter id={`${uid}-glow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="1.2" result="coloredBlur" />
+          <feMerge>
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       {[0, 25, 50, 75, 100].map((line) => {
         const y = 8 + (line / 100) * 78
         return (
@@ -164,23 +203,34 @@ function LineChart({ labels, joined, expired, pending }) {
         </text>
         )
       })}
+      <path
+        d={areaPath(joined)}
+        fill={`url(#${uid}-joined-area)`}
+      />
       <polyline
         fill="none"
-        stroke="var(--accent)"
+        stroke={`url(#${uid}-joined)`}
         strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter={`url(#${uid}-glow)`}
         points={points(joined)}
       />
       <polyline
         fill="none"
-        stroke="#ef4444"
-        strokeWidth="3"
+        stroke={`url(#${uid}-expired)`}
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         points={points(expired)}
       />
       {pending?.length ? (
         <polyline
           fill="none"
-          stroke="#f59e0b"
-          strokeWidth="3"
+          stroke={`url(#${uid}-pending)`}
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           points={points(pending)}
         />
       ) : null}
@@ -188,7 +238,7 @@ function LineChart({ labels, joined, expired, pending }) {
         const x = 8 + (index / (joined.length - 1 || 1)) * 84
         const y = 8 + (1 - value / safeMax) * 78
         return (
-          <circle key={`joined-${index}`} cx={x} cy={y} r="1.6" fill="var(--accent)">
+          <circle key={`joined-${index}`} cx={x} cy={y} r="1.8" fill="var(--accent)">
             <title>{`${labels[index]} • Joined: ${value}`}</title>
           </circle>
         )
@@ -228,12 +278,23 @@ function LineChart({ labels, joined, expired, pending }) {
 }
 
 function DoughnutChart({ uniCount, extCount }) {
+  const uid = useId()
   const total = uniCount + extCount || 1
   const uniPercent = (uniCount / total) * 100
   const extPercent = 100 - uniPercent
 
   return (
     <svg viewBox="0 0 36 36" className="h-full w-full">
+      <defs>
+        <linearGradient id={`${uid}-uni`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="1" />
+          <stop offset="100%" stopColor="var(--accent-strong)" stopOpacity="0.9" />
+        </linearGradient>
+        <linearGradient id={`${uid}-ext`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#94a3b8" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#64748b" stopOpacity="0.9" />
+        </linearGradient>
+      </defs>
       <circle
         cx="18"
         cy="18"
@@ -247,7 +308,7 @@ function DoughnutChart({ uniCount, extCount }) {
         cy="18"
         r="14"
         fill="none"
-        stroke="var(--accent)"
+        stroke={`url(#${uid}-uni)`}
         strokeWidth="6"
         strokeDasharray={`${uniPercent} ${100 - uniPercent}`}
         strokeDashoffset="25"
@@ -257,7 +318,7 @@ function DoughnutChart({ uniCount, extCount }) {
         cy="18"
         r="14"
         fill="none"
-        stroke="#94a3b8"
+        stroke={`url(#${uid}-ext)`}
         strokeWidth="6"
         strokeDasharray={`${extPercent} ${100 - extPercent}`}
         strokeDashoffset={`${25 + uniPercent}`}
@@ -280,6 +341,7 @@ export default function AdminDashboard() {
   const [dashboardStats, setDashboardStats] = useState(null)
   const [dashboardError, setDashboardError] = useState('')
   const [dashboardChart, setDashboardChart] = useState(null)
+  const [membersError, setMembersError] = useState('')
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -358,6 +420,46 @@ export default function AdminDashboard() {
     }
 
     loadStats()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    const formatDate = (value) => {
+      if (!value) return ''
+      const parsed = new Date(value)
+      if (Number.isNaN(parsed.getTime())) return ''
+      return parsed.toISOString().split('T')[0]
+    }
+
+    const loadMembers = async () => {
+      try {
+        const data = await getAdminMembers()
+        if (!active) return
+        const rows = (data?.data?.data || data?.data || []).map((user) => ({
+          id: String(user.id),
+          fullName: user.name || 'Unknown',
+          membershipId: user.member_id || 'N/A',
+          membershipType: user.membership_plan || user.membership_type || 'N/A',
+          isUniversityMember: user.member_type === 'university',
+          phone: user.phone || 'N/A',
+          joinDate: formatDate(user.plan_start_at || user.created_at),
+          expiryDate: formatDate(user.plan_expires_at),
+        }))
+        setMembers(rows)
+        setMembersError('')
+      } catch (err) {
+        if (active) {
+          setMembersError(err?.message || 'Unable to load members.')
+        }
+      }
+    }
+
+    loadMembers()
 
     return () => {
       active = false
@@ -484,7 +586,7 @@ export default function AdminDashboard() {
         onToggleTheme={handleToggleTheme}
       />
 
-      <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-8">
+      <main className="mx-auto w-full max-w-7xl px-6 py-10 md:px-8">
         <h1 className="text-2xl font-semibold">Admin Overview</h1>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -518,10 +620,13 @@ export default function AdminDashboard() {
           </div>
         ) : null}
 
-        <section className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+        <section className="mt-10 grid gap-6 lg:grid-cols-[3fr_1.2fr]">
+          <div className="chart-card chart-card--primary rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
             <h2 className="text-lg font-semibold">Membership Trends (6 Months)</h2>
-            <div className="mt-4 h-60">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Joined vs expired vs pending members.
+            </p>
+            <div className="mt-6 h-72">
               <LineChart
                 labels={chartData.labels}
                 joined={chartData.joined}
@@ -530,21 +635,29 @@ export default function AdminDashboard() {
               />
             </div>
           </div>
-          <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-            <h2 className="text-lg font-semibold">Pending Approvals (6 Months)</h2>
-            <div className="mt-4 h-48">
-              <LineChart
-                labels={chartData.labels}
-                joined={chartData.pending}
-                expired={Array(chartData.pending.length).fill(0)}
-                pending={[]}
-              />
+          <div className="grid gap-6">
+            <div className="chart-card rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+              <h2 className="text-lg font-semibold">Pending Approvals (6 Months)</h2>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
+                Pending registrations by month.
+              </p>
+              <div className="mt-6 h-52">
+                <LineChart
+                  labels={chartData.labels}
+                  joined={chartData.pending}
+                  expired={Array(chartData.pending.length).fill(0)}
+                  pending={[]}
+                />
+              </div>
             </div>
-          </div>
-          <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-            <h2 className="text-lg font-semibold">User Distribution</h2>
-            <div className="mt-4 h-48">
-              <DoughnutChart uniCount={stats.uni} extCount={stats.ext} />
+            <div className="chart-card rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+              <h2 className="text-lg font-semibold">User Distribution</h2>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
+                University vs external.
+              </p>
+              <div className="mt-6 h-48">
+                <DoughnutChart uniCount={stats.uni} extCount={stats.ext} />
+              </div>
             </div>
           </div>
         </section>
@@ -596,6 +709,12 @@ export default function AdminDashboard() {
               Add New Member
             </button>
           </div>
+
+          {membersError ? (
+            <div className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              {membersError}
+            </div>
+          ) : null}
 
           <div className="mt-4 grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
             <input

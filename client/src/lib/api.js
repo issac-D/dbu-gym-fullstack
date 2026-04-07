@@ -86,6 +86,12 @@ export async function getAdminDashboard() {
   })
 }
 
+export async function getAdminMembers() {
+  return request('/api/admin/members', {
+    method: 'GET',
+  })
+}
+
 export async function getAdminApprovals() {
   return request('/api/admin/approvals', {
     method: 'GET',

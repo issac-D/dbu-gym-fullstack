@@ -125,6 +125,31 @@ body {
   box-shadow: 0 30px 60px -40px rgba(0, 0, 0, 0.85);
 }
 
+.chart-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.2));
+  box-shadow: 0 30px 70px -45px rgba(0, 0, 0, 0.85);
+}
+
+.chart-card::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  background: radial-gradient(circle at top left, rgba(81, 204, 249, 0.18), transparent 60%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.chart-card--primary {
+  border-color: var(--accent);
+  box-shadow: 0 35px 80px -45px var(--accent-glow);
+}
+
+.chart-card svg {
+  filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.35));
+}
+
 .glow-ring {
   box-shadow: 0 0 0 1px var(--border), 0 0 40px var(--accent-glow);
 }
