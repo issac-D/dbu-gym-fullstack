@@ -89,6 +89,8 @@ export default function Register() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [step, setStep] = useState(1)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [memberType, setMemberType] = useState('university')
   const [avatarFile, setAvatarFile] = useState(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -364,7 +366,7 @@ export default function Register() {
               </div>
 
               {step === 1 ? (
-                <>
+                <div className="animate-fade-up">
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="block text-sm text-white/70">
                       Full Name
@@ -417,7 +419,7 @@ export default function Register() {
                       }`}>
                         <LockIcon className="h-5 w-5 text-[var(--accent)]" />
                         <input
-                          type="password"
+                          type={showPassword ? 'text' : 'password'}
                           name="password"
                           value={formValues.password}
                           onChange={(event) => {
@@ -428,6 +430,14 @@ export default function Register() {
                           disabled={submitting}
                           className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="text-xs text-[var(--accent)]"
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? 'Hide' : 'Show'}
+                        </button>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-3 text-xs">
                         <span className={`flex items-center gap-1 ${hasMinLength ? 'text-emerald-300' : 'text-red-300'}`}>
@@ -447,7 +457,7 @@ export default function Register() {
                       }`}>
                         <LockIcon className="h-5 w-5 text-[var(--accent)]" />
                         <input
-                          type="password"
+                          type={showConfirmPassword ? 'text' : 'password'}
                           name="password_confirmation"
                           value={formValues.password_confirmation}
                           onChange={handleChange}
@@ -455,17 +465,25 @@ export default function Register() {
                           placeholder="••••••••"
                           className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((prev) => !prev)}
+                          className="text-xs text-[var(--accent)]"
+                          aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showConfirmPassword ? 'Hide' : 'Show'}
+                        </button>
                       </div>
                       {submitted && formValues.password_confirmation && formValues.password_confirmation !== formValues.password ? (
                         <span className="mt-2 block text-xs text-red-200">Passwords do not match.</span>
                       ) : null}
                     </label>
                   </div>
-                </>
+                </div>
               ) : null}
 
               {step === 2 ? (
-                <>
+                <div className="animate-fade-up">
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="block text-sm text-white/70">
                       Phone Number
@@ -578,11 +596,11 @@ export default function Register() {
                       </label>
                     </div>
                   )}
-                </>
+                </div>
               ) : null}
 
               {step === 3 ? (
-                <>
+                <div className="animate-fade-up">
                   <label className="block text-sm text-white/70">
                     Profile Picture
                     <input
@@ -608,7 +626,7 @@ export default function Register() {
                     </Link>
                     .
                   </label>
-                </>
+                </div>
               ) : null}
 
               <div className="flex flex-wrap items-center gap-3">
