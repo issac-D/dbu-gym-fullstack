@@ -137,6 +137,56 @@ export async function getAdminApprovalHistory(params = {}) {
   })
 }
 
+async function downloadCsv(path, filename) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    credentials: 'include',
+    headers: {
+      Accept: 'text/csv',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...(getCookie('XSRF-TOKEN')
+        ? { 'X-XSRF-TOKEN': getCookie('XSRF-TOKEN') }
+        : {}),
+    },
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(errorBody || 'Export failed')
+  }
+
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+export async function exportAdminApprovalsCsv(params = {}) {
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+  )
+  const query = new URLSearchParams(cleaned).toString()
+  const path = query ? `/api/admin/approvals/export?${query}` : '/api/admin/approvals/export'
+  const today = new Date().toISOString().split('T')[0]
+  return downloadCsv(path, `approvals-${today}.csv`)
+}
+
+export async function exportAdminApprovalHistoryCsv(params = {}) {
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+  )
+  const query = new URLSearchParams(cleaned).toString()
+  const path = query
+    ? `/api/admin/approvals/history/export?${query}`
+    : '/api/admin/approvals/history/export'
+  const today = new Date().toISOString().split('T')[0]
+  return downloadCsv(path, `approval-history-${today}.csv`)
+}
+
 export async function approveMember(memberId) {
   return request(`/api/admin/approvals/${memberId}/approve`, {
     method: 'POST',

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Admin\ApprovalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApprovalsController extends Controller
 {
@@ -34,6 +35,78 @@ class ApprovalsController extends Controller
         return response()->json([
             'message' => 'Approval history loaded.',
             'data' => UserResource::collection($history),
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $filters = $request->only(['status', 'search', 'member_type', 'from_date', 'to_date']);
+        $rows = $this->service->list($filters);
+
+        $filename = 'approvals-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Name', 'Email', 'Member ID', 'Type', 'Plan', 'Status', 'Date']);
+
+            foreach ($rows as $user) {
+                fputcsv($handle, [
+                    $user->name,
+                    $user->email,
+                    $user->member_id,
+                    $user->member_type,
+                    $user->membership_type,
+                    $user->membership_status,
+                    optional($user->created_at)->format('Y-m-d'),
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function exportHistory(Request $request): StreamedResponse
+    {
+        $filters = $request->only(['status', 'search', 'member_type', 'from_date', 'to_date']);
+        $rows = $this->service->listHistory($filters);
+
+        $filename = 'approval-history-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Name',
+                'Email',
+                'Member ID',
+                'Member Type',
+                'Status',
+                'Approved By',
+                'Approved At',
+                'Rejected By',
+                'Rejected At',
+                'Reason',
+            ]);
+
+            foreach ($rows as $user) {
+                fputcsv($handle, [
+                    $user->name,
+                    $user->email,
+                    $user->member_id,
+                    $user->member_type,
+                    $user->membership_status,
+                    optional($user->approvedBy)->name,
+                    optional($user->approved_at)->format('Y-m-d H:i:s'),
+                    optional($user->rejectedBy)->name,
+                    optional($user->rejected_at)->format('Y-m-d H:i:s'),
+                    $user->rejection_reason,
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 

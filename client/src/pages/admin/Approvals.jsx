@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
-import { approveMember, getAdminApprovals, rejectMember } from '../../lib/api'
+import {
+  approveMember,
+  exportAdminApprovalsCsv,
+  getAdminApprovals,
+  rejectMember,
+} from '../../lib/api'
 
 export default function Approvals() {
   const [theme, setTheme] = useState(
@@ -100,6 +105,42 @@ export default function Approvals() {
       ? selected.universityId
       : selected.nationalId || 'N/A'
   }, [selected])
+
+  const formatDate = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const applyPreset = (days) => {
+    const today = new Date()
+    const from = new Date()
+    from.setDate(today.getDate() - days + 1)
+    setFromDate(formatDate(from))
+    setToDate(formatDate(today))
+  }
+
+  const exportCsv = async () => {
+    try {
+      await exportAdminApprovalsCsv({
+        status: statusFilter || 'pending',
+        search,
+        member_type: typeFilter || undefined,
+        from_date: fromDate || undefined,
+        to_date: toDate || undefined,
+      })
+    } catch (err) {
+      setError(err?.message || 'Unable to export CSV.')
+    }
+  }
+
+  const applyThisMonth = () => {
+    const today = new Date()
+    const first = new Date(today.getFullYear(), today.getMonth(), 1)
+    setFromDate(formatDate(first))
+    setToDate(formatDate(today))
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
@@ -215,6 +256,56 @@ export default function Approvals() {
               className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
             />
           </label>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-soft)]">
+          <div className="flex flex-wrap items-center gap-2">
+            <span>Quick range:</span>
+            <button
+              type="button"
+              onClick={() => applyPreset(7)}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              Last 7 days
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset(30)}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              Last 30 days
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset(90)}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              Last 90 days
+            </button>
+            <button
+              type="button"
+              onClick={applyThisMonth}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              This month
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFromDate('')
+                setToDate('')
+              }}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              Clear
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="rounded-full border border-[var(--accent)] px-3 py-1 text-xs text-[var(--accent)]"
+          >
+            Export CSV
+          </button>
         </div>
 
         <div className="mt-4 overflow-x-auto rounded-3xl border border-[var(--border)] bg-[var(--surface)]">

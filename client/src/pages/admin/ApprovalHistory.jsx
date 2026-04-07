@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
-import { getAdminApprovalHistory } from '../../lib/api'
+import { exportAdminApprovalHistoryCsv, getAdminApprovalHistory } from '../../lib/api'
 
 export default function ApprovalHistory() {
   const [theme, setTheme] = useState(
@@ -13,6 +13,7 @@ export default function ApprovalHistory() {
   const [typeFilter, setTypeFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [sortBy, setSortBy] = useState('date_desc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -47,10 +48,12 @@ export default function ApprovalHistory() {
             approvedAt: user.approved_at
               ? new Date(user.approved_at).toLocaleString()
               : '—',
+            approvedAtRaw: user.approved_at || null,
             rejectedBy: user.rejected_by_name || '—',
             rejectedAt: user.rejected_at
               ? new Date(user.rejected_at).toLocaleString()
               : '—',
+            rejectedAtRaw: user.rejected_at || null,
             reason: user.rejection_reason || '—',
           }))
           setRecords(rows)
@@ -70,6 +73,62 @@ export default function ApprovalHistory() {
     }
   }, [search, statusFilter, typeFilter, fromDate, toDate])
 
+  const sortedRecords = useMemo(() => {
+    const statusOrder = { approved: 1, active: 1, rejected: 2, pending: 3, '': 4 }
+    const getDateValue = (record) => {
+      const raw = record.approvedAtRaw || record.rejectedAtRaw
+      return raw ? new Date(raw).getTime() : 0
+    }
+    const data = [...records]
+    if (sortBy === 'date_asc') {
+      return data.sort((a, b) => getDateValue(a) - getDateValue(b))
+    }
+    if (sortBy === 'status') {
+      return data.sort(
+        (a, b) =>
+          (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9) ||
+          getDateValue(b) - getDateValue(a)
+      )
+    }
+    return data.sort((a, b) => getDateValue(b) - getDateValue(a))
+  }, [records, sortBy])
+
+  const formatDate = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const applyPreset = (days) => {
+    const today = new Date()
+    const from = new Date()
+    from.setDate(today.getDate() - days + 1)
+    setFromDate(formatDate(from))
+    setToDate(formatDate(today))
+  }
+
+  const exportCsv = async () => {
+    try {
+      await exportAdminApprovalHistoryCsv({
+        status: statusFilter || 'all',
+        search,
+        member_type: typeFilter || undefined,
+        from_date: fromDate || undefined,
+        to_date: toDate || undefined,
+      })
+    } catch (err) {
+      setError(err?.message || 'Unable to export CSV.')
+    }
+  }
+
+  const applyThisMonth = () => {
+    const today = new Date()
+    const first = new Date(today.getFullYear(), today.getMonth(), 1)
+    setFromDate(formatDate(first))
+    setToDate(formatDate(today))
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <AdminNavbar
@@ -88,7 +147,7 @@ export default function ApprovalHistory() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
+        <div className="mt-6 grid gap-3 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -113,6 +172,15 @@ export default function ApprovalHistory() {
             <option value="university">University</option>
             <option value="external">External</option>
           </select>
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+          >
+            <option value="date_desc">Newest First</option>
+            <option value="date_asc">Oldest First</option>
+            <option value="status">Status Grouped</option>
+          </select>
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <label className="text-xs text-[var(--text-soft)]">
@@ -133,6 +201,56 @@ export default function ApprovalHistory() {
               className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
             />
           </label>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-soft)]">
+          <div className="flex flex-wrap items-center gap-2">
+            <span>Quick range:</span>
+            <button
+              type="button"
+              onClick={() => applyPreset(7)}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              Last 7 days
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset(30)}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              Last 30 days
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset(90)}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              Last 90 days
+            </button>
+            <button
+              type="button"
+              onClick={applyThisMonth}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              This month
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFromDate('')
+                setToDate('')
+              }}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
+            >
+              Clear
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="rounded-full border border-[var(--accent)] px-3 py-1 text-xs text-[var(--accent)]"
+          >
+            Export CSV
+          </button>
         </div>
 
         {loading ? (
@@ -160,8 +278,8 @@ export default function ApprovalHistory() {
               </tr>
             </thead>
             <tbody>
-              {records.length ? (
-                records.map((record) => (
+              {sortedRecords.length ? (
+                sortedRecords.map((record) => (
                   <tr key={record.id} className="border-t border-[var(--border)]">
                     <td className="px-4 py-3">
                       <div className="font-semibold">{record.name}</div>
