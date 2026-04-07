@@ -511,49 +511,51 @@ export default function AdminDashboard() {
     }
   }, [])
 
+  const formatMemberDate = (value) => {
+    if (!value) return ''
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return ''
+    return parsed.toISOString().split('T')[0]
+  }
+
+  const mapUserToMember = (user) => ({
+    id: String(user.id),
+    fullName: user.name || 'Unknown',
+    membershipId: user.member_id || 'N/A',
+    membershipType: user.membership_plan || user.membership_type || 'N/A',
+    isUniversityMember: user.member_type === 'university',
+    phone: user.phone || 'N/A',
+    joinDate: formatMemberDate(user.plan_start_at || user.created_at),
+    expiryDate: formatMemberDate(user.plan_expires_at),
+    accountStatus: user.account_status || 'active',
+    gender: user.gender || '',
+    email: user.email || '',
+    universityId: user.university_id || '',
+    department: user.department || '',
+    nationalId: user.national_id || '',
+    address: user.address || '',
+  })
+
+  const loadMembers = async () => {
+    try {
+      const data = await getAdminMembers()
+      const rows = (data?.data?.data || data?.data || []).map(mapUserToMember)
+      setMembers(rows)
+      setMembersError('')
+    } catch (err) {
+      setMembersError(err?.message || 'Unable to load members.')
+    }
+  }
+
   useEffect(() => {
     let active = true
 
-    const formatDate = (value) => {
-      if (!value) return ''
-      const parsed = new Date(value)
-      if (Number.isNaN(parsed.getTime())) return ''
-      return parsed.toISOString().split('T')[0]
+    const safeLoad = async () => {
+      if (!active) return
+      await loadMembers()
     }
 
-    const mapUserToMember = (user) => ({
-      id: String(user.id),
-      fullName: user.name || 'Unknown',
-      membershipId: user.member_id || 'N/A',
-      membershipType: user.membership_plan || user.membership_type || 'N/A',
-      isUniversityMember: user.member_type === 'university',
-      phone: user.phone || 'N/A',
-      joinDate: formatDate(user.plan_start_at || user.created_at),
-      expiryDate: formatDate(user.plan_expires_at),
-      accountStatus: user.account_status || 'active',
-      gender: user.gender || '',
-      email: user.email || '',
-      universityId: user.university_id || '',
-      department: user.department || '',
-      nationalId: user.national_id || '',
-      address: user.address || '',
-    })
-
-    const loadMembers = async () => {
-      try {
-        const data = await getAdminMembers()
-        if (!active) return
-        const rows = (data?.data?.data || data?.data || []).map(mapUserToMember)
-        setMembers(rows)
-        setMembersError('')
-      } catch (err) {
-        if (active) {
-          setMembersError(err?.message || 'Unable to load members.')
-        }
-      }
-    }
-
-    loadMembers()
+    safeLoad()
 
     return () => {
       active = false
@@ -635,65 +637,11 @@ export default function AdminDashboard() {
 
     try {
       if (editingMember) {
-        const response = await updateAdminMember(editingMember.id, payload)
-        const updatedUser = response?.user
-        if (updatedUser) {
-          setMembers((prev) =>
-            prev.map((member) =>
-              member.id === String(updatedUser.id)
-                ? {
-                    ...member,
-                    fullName: updatedUser.name || member.fullName,
-                    membershipId: updatedUser.member_id || member.membershipId,
-                    membershipType: updatedUser.membership_plan || updatedUser.membership_type || member.membershipType,
-                    isUniversityMember: updatedUser.member_type === 'university',
-                    phone: updatedUser.phone || member.phone,
-                    joinDate: updatedUser.plan_start_at
-                      ? new Date(updatedUser.plan_start_at).toISOString().split('T')[0]
-                      : member.joinDate,
-                    expiryDate: updatedUser.plan_expires_at
-                      ? new Date(updatedUser.plan_expires_at).toISOString().split('T')[0]
-                      : member.expiryDate,
-                    accountStatus: updatedUser.account_status || member.accountStatus,
-                    gender: updatedUser.gender || member.gender,
-                    email: updatedUser.email || member.email,
-                    universityId: updatedUser.university_id || member.universityId,
-                    department: updatedUser.department || member.department,
-                    nationalId: updatedUser.national_id || member.nationalId,
-                    address: updatedUser.address || member.address,
-                  }
-                : member
-            )
-          )
-        }
+        await updateAdminMember(editingMember.id, payload)
       } else {
-        const response = await createAdminMember(payload)
-        const createdUser = response?.user
-        if (createdUser) {
-          const newMember = {
-            id: String(createdUser.id),
-            fullName: createdUser.name || form.fullName,
-            membershipId: createdUser.member_id || 'N/A',
-            membershipType: createdUser.membership_plan || createdUser.membership_type || form.membershipType,
-            isUniversityMember: createdUser.member_type === 'university',
-            phone: createdUser.phone || form.phone,
-            joinDate: createdUser.plan_start_at
-              ? new Date(createdUser.plan_start_at).toISOString().split('T')[0]
-              : new Date().toISOString().split('T')[0],
-            expiryDate: createdUser.plan_expires_at
-              ? new Date(createdUser.plan_expires_at).toISOString().split('T')[0]
-              : '',
-            accountStatus: createdUser.account_status || 'active',
-            gender: createdUser.gender || form.gender,
-            email: createdUser.email || form.email,
-            universityId: createdUser.university_id || form.universityId,
-            department: createdUser.department || form.department,
-            nationalId: createdUser.national_id || form.nationalId,
-            address: createdUser.address || form.address,
-          }
-          setMembers((prev) => [newMember, ...prev])
-        }
+        await createAdminMember(payload)
       }
+      await loadMembers()
       setShowModal(false)
       resetForm()
     } catch (err) {
@@ -706,15 +654,8 @@ export default function AdminDashboard() {
     const label = nextStatus === 'active' ? 'activate' : 'deactivate'
     if (!window.confirm(`Are you sure you want to ${label} this member?`)) return
     try {
-      const response = await updateAdminMemberStatus(member.id, nextStatus)
-      const updated = response?.user
-      setMembers((prev) =>
-        prev.map((item) =>
-          item.id === member.id
-            ? { ...item, accountStatus: updated?.account_status || nextStatus }
-            : item
-        )
-      )
+      await updateAdminMemberStatus(member.id, nextStatus)
+      await loadMembers()
     } catch (err) {
       alert(err?.message || 'Unable to update status.')
     }
