@@ -15,12 +15,13 @@ class ApprovalsController extends Controller
     {
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $pending = $this->service->listPending();
+        $filters = $request->only(['status', 'search', 'member_type']);
+        $pending = $this->service->list($filters);
 
         return response()->json([
-            'message' => 'Pending approvals loaded.',
+            'message' => 'Approvals loaded.',
             'data' => UserResource::collection($pending),
         ]);
     }

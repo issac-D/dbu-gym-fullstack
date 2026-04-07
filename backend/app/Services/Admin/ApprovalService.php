@@ -8,13 +8,36 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ApprovalService
 {
-    public function listPending(): Collection
+    public function list(array $filters = []): Collection
     {
-        return User::query()
-            ->where('role', 'member')
-            ->where('membership_status', 'pending')
-            ->latest('created_at')
-            ->get();
+        $query = User::query()->where('role', 'member');
+
+        $status = $filters['status'] ?? 'pending';
+        if ($status && $status !== 'all') {
+            $statusValue = match (strtolower($status)) {
+                'approved', 'active' => 'Active',
+                'rejected' => 'rejected',
+                default => 'pending',
+            };
+            $query->where('membership_status', $statusValue);
+        }
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('member_id', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $memberType = $filters['member_type'] ?? null;
+        if ($memberType === 'university' || $memberType === 'external') {
+            $query->where('member_type', $memberType);
+        }
+
+        return $query->latest('created_at')->get();
     }
 
     public function approve(User $user, User $admin): User

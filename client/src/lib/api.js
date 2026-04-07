@@ -113,8 +113,13 @@ export async function updateAdminMemberStatus(memberId, status) {
   })
 }
 
-export async function getAdminApprovals() {
-  return request('/api/admin/approvals', {
+export async function getAdminApprovals(params = {}) {
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+  )
+  const query = new URLSearchParams(cleaned).toString()
+  const path = query ? `/api/admin/approvals?${query}` : '/api/admin/approvals'
+  return request(path, {
     method: 'GET',
   })
 }

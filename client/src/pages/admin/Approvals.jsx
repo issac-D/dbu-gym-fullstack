@@ -8,6 +8,9 @@ export default function Approvals() {
     document.documentElement.dataset.theme || 'dark'
   )
   const [pending, setPending] = useState([])
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('pending')
+  const [typeFilter, setTypeFilter] = useState('')
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -24,37 +27,44 @@ export default function Approvals() {
 
   useEffect(() => {
     let active = true
-
-    const loadApprovals = async () => {
-      try {
-        const data = await getAdminApprovals()
-        if (!active) return
-        const rows = (data?.data || []).map((user) => ({
-          id: user.id,
-          joinDate: user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A',
-          fullName: user.name,
-          email: user.email,
-          membershipId: user.member_id || 'N/A',
-          membershipType: user.membership_type || 'N/A',
-          isUniversityMember: user.member_type === 'university',
-          universityId: user.university_id || '',
-          nationalId: user.national_id || '',
-          phone: user.phone || '',
-        }))
-        setPending(rows)
-      } catch (err) {
-        if (active) setError(err?.message || 'Unable to load approvals.')
-      } finally {
-        if (active) setLoading(false)
+    const timeout = setTimeout(() => {
+      const loadApprovals = async () => {
+        try {
+          const data = await getAdminApprovals({
+            status: statusFilter || 'pending',
+            search,
+            member_type: typeFilter || undefined,
+          })
+          if (!active) return
+          const rows = (data?.data || []).map((user) => ({
+            id: user.id,
+            joinDate: user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A',
+            fullName: user.name,
+            email: user.email,
+            membershipId: user.member_id || 'N/A',
+            membershipType: user.membership_type || 'N/A',
+            isUniversityMember: user.member_type === 'university',
+            universityId: user.university_id || '',
+            nationalId: user.national_id || '',
+            phone: user.phone || '',
+            status: (user.membership_status || '').toLowerCase(),
+          }))
+          setPending(rows)
+        } catch (err) {
+          if (active) setError(err?.message || 'Unable to load approvals.')
+        } finally {
+          if (active) setLoading(false)
+        }
       }
-    }
 
-    loadApprovals()
+      loadApprovals()
+    }, 300)
 
     return () => {
+      clearTimeout(timeout)
       active = false
     }
-  }, [])
+  }, [search, statusFilter, typeFilter])
 
   const handleApprove = async () => {
     if (!selected) return
@@ -98,21 +108,25 @@ export default function Approvals() {
       <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Pending Registrations</h1>
+            <h1 className="text-2xl font-semibold">Approvals</h1>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
-              Review and approve new member applications.
+              Review and approve member applications.
             </p>
           </div>
           <div className="flex items-center gap-3">
             <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs text-red-200">
-              Pending: {pendingCount}
+              Results: {pendingCount}
             </span>
             <button
               type="button"
               onClick={() => {
                 setLoading(true)
                 setError('')
-                getAdminApprovals()
+                getAdminApprovals({
+                  status: statusFilter || 'pending',
+                  search,
+                  member_type: typeFilter || undefined,
+                })
                   .then((data) => {
                     const rows = (data?.data || []).map((user) => ({
                       id: user.id,
@@ -125,6 +139,7 @@ export default function Approvals() {
                       universityId: user.university_id || '',
                       nationalId: user.national_id || '',
                       phone: user.phone || '',
+                      status: (user.membership_status || '').toLowerCase(),
                     }))
                     setPending(rows)
                   })
@@ -148,7 +163,35 @@ export default function Approvals() {
           </div>
         ) : null}
 
-        <div className="mt-6 overflow-x-auto rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
+        <div className="mt-6 grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by name, email, member ID..."
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+          />
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+          >
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">All</option>
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(event) => setTypeFilter(event.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+          >
+            <option value="">All Types</option>
+            <option value="university">University</option>
+            <option value="external">External</option>
+          </select>
+        </div>
+
+        <div className="mt-4 overflow-x-auto rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
           <table className="w-full text-left text-sm">
             <thead className="bg-[var(--surface-strong)] text-xs uppercase text-[var(--text-soft)]">
               <tr>
@@ -157,6 +200,7 @@ export default function Approvals() {
                 <th>Type</th>
                 <th>ID Number</th>
                 <th>Plan</th>
+                <th>Status</th>
                 <th className="text-right pr-4">Actions</th>
               </tr>
             </thead>
@@ -179,23 +223,28 @@ export default function Approvals() {
                         : member.nationalId || 'N/A'}
                     </td>
                     <td>{member.membershipType}</td>
+                    <td>
+                      <span className="rounded-full border border-[var(--border)] px-2 py-1 text-xs">
+                        {member.status || 'pending'}
+                      </span>
+                    </td>
                     <td className="text-right pr-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelected(member)
-                  setRejectReason('')
-                }}
-                className="rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-black"
-              >
-                Review
-              </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelected(member)
+                          setRejectReason('')
+                        }}
+                        className="rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-black"
+                      >
+                        Review
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-4 py-10 text-center text-[var(--text-soft)]">
+                  <td colSpan="7" className="px-4 py-10 text-center text-[var(--text-soft)]">
                     All caught up! No pending approvals.
                   </td>
                 </tr>
