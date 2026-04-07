@@ -45,6 +45,10 @@ class SystemSettingsController extends Controller
             'logo' => ['required', 'image', 'max:2048'],
         ]);
 
+        if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
+            Storage::disk('public')->delete($settings->logo_path);
+        }
+
         $path = $request->file('logo')->store('system', 'public');
         $settings->update([
             'logo_path' => $path,

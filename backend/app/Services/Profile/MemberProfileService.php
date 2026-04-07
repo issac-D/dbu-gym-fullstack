@@ -5,6 +5,7 @@ namespace App\Services\Profile;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class MemberProfileService
 {
@@ -39,6 +40,10 @@ class MemberProfileService
 
     public function updateAvatar(User $user, UploadedFile $file): string
     {
+        if ($user->avatar_path && Storage::disk('public')->exists($user->avatar_path)) {
+            Storage::disk('public')->delete($user->avatar_path);
+        }
+
         $path = $file->store('avatars', 'public');
 
         $user->update([
