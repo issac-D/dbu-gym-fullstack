@@ -1,8 +1,16 @@
+import { useEffect, useRef } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from './AuthProvider'
 
 export default function ProtectedRoute({ role }) {
-  const { user, loading, role: userRole } = useAuth()
+  const { user, loading, role: userRole, refreshUser } = useAuth()
+  const hasRefreshed = useRef(false)
+
+  useEffect(() => {
+    if (hasRefreshed.current) return
+    hasRefreshed.current = true
+    refreshUser()
+  }, [refreshUser])
 
   if (loading) {
     return (

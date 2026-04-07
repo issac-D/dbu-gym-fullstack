@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
     let active = true
 
     const loadUser = async () => {
+      setLoading(true)
       try {
         const data = await apiMe()
         if (active) setUser(data.user)
@@ -27,6 +28,20 @@ export function AuthProvider({ children }) {
       active = false
     }
   }, [])
+
+  const refreshUser = async () => {
+    setLoading(true)
+    try {
+      const data = await apiMe()
+      setUser(data.user)
+      return data.user
+    } catch {
+      setUser(null)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const role = useMemo(() => {
     if (!user?.role) return null
@@ -58,6 +73,7 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      refreshUser,
     }),
     [user, role, loading]
   )
