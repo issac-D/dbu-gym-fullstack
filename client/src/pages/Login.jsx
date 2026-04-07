@@ -68,8 +68,8 @@ export default function Login() {
   const { login } = useAuth()
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [email, setEmail] = useState('member@dbugym.com')
-  const [password, setPassword] = useState('Dbu@1234')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [touched, setTouched] = useState({ email: false, password: false })
   const [showPassword, setShowPassword] = useState(false)
 
@@ -95,6 +95,10 @@ export default function Login() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleGoogleLogin = () => {
+    setError('Google login is not configured yet. Please use email/password for now.')
   }
 
   return (
@@ -197,13 +201,16 @@ export default function Login() {
               </div>
             ) : null}
 
-    <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
-      Demo member: <span className="text-[var(--accent)]">member@dbugym.com</span>{' '}
-      / <span className="text-[var(--accent)]">Dbu@1234</span>
-      <br />
-      Admin login: <span className="text-[var(--accent)]">admin@gmail.com</span>{' '}
-      / <span className="text-[var(--accent)]">12345678</span>
-    </div>
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="flex w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white/80 transition hover:border-[var(--accent)] hover:text-white"
+              >
+                <i className="fab fa-google text-[var(--accent)]"></i>
+                Continue with Google
+              </button>
+            </div>
 
             <div className="mt-6 text-center text-sm text-white/60">
               <Link to="/forgot" className="text-[var(--accent)] hover:underline">
