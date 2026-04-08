@@ -41,6 +41,7 @@ class UserResource extends JsonResource
             'university_id' => $this->university_id,
             'department' => $this->department,
             'member_type' => $this->member_type,
+            'internal_role' => $this->internal_role,
             'gender' => $this->gender,
             'national_id' => $this->national_id,
             'address' => $this->address,

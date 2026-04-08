@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\User;
+use App\Models\Member;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -50,15 +51,16 @@ class AdminMembersService
         $planExpires = $this->calculatePlanExpiry($plan, $planStart);
         $planCost = $this->calculatePlanCost($plan, $data['member_type'] ?? null);
 
-        return User::query()->create([
+        $user = User::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password'] ?? 'dbugym123'),
             'role' => 'member',
-            'account_status' => $data['account_status'] ?? 'active',
+            'account_status' => $data['account_status'] ?? 'Active',
             'phone' => $data['phone'] ?? null,
             'gender' => $data['gender'] ?? null,
             'member_type' => $data['member_type'] ?? null,
+            'internal_role' => $data['internal_role'] ?? null,
             'membership_type' => $data['membership_type'] ?? null,
             'membership_plan' => $data['membership_plan'] ?? $plan,
             'membership_status' => 'approved',
@@ -74,6 +76,17 @@ class AdminMembersService
             'address' => $data['address'] ?? null,
             'member_id' => $this->generateMemberId($data['member_type'] ?? null),
         ]);
+
+        Member::query()->create([
+            'user_id' => $user->id,
+            'membership_type' => $data['member_type'] === 'external' ? 'External' : 'Student',
+            'membership_expiry_date' => $planExpires?->toDateString() ?? now()->toDateString(),
+            'date_of_birth' => $data['date_of_birth'] ?? null,
+            'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
+            'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
+        ]);
+
+        return $user;
     }
 
     public function update(User $user, array $data): User
@@ -117,6 +130,22 @@ class AdminMembersService
 
         $user->fill($payload);
         $user->save();
+
+        $member = Member::query()->firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'membership_type' => $user->member_type === 'external' ? 'External' : 'Student',
+                'membership_expiry_date' => $user->plan_expires_at?->toDateString() ?? now()->toDateString(),
+            ]
+        );
+
+        if (array_key_exists('member_type', $data)) {
+            $member->membership_type = $user->member_type === 'external' ? 'External' : 'Student';
+        }
+        if (array_key_exists('membership_type', $data) && $user->plan_expires_at) {
+            $member->membership_expiry_date = $user->plan_expires_at->toDateString();
+        }
+        $member->save();
 
         return $user->refresh();
     }

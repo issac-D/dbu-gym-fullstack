@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use App\Models\User;
+use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +23,7 @@ class AuthService
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => 'member',
-            'account_status' => 'active',
+            'account_status' => 'PendingApproval',
             'phone' => $data['phone'] ?? null,
             'gender' => $data['gender'] ?? null,
             'member_type' => $data['member_type'] ?? null,
@@ -39,6 +40,15 @@ class AuthService
             'address' => $data['address'] ?? null,
             'member_id' => $memberId,
             'terms_accepted_at' => now(),
+        ]);
+
+        Member::query()->create([
+            'user_id' => $user->id,
+            'membership_type' => $data['member_type'] === 'external' ? 'External' : 'Student',
+            'membership_expiry_date' => $planExpires?->toDateString() ?? now()->toDateString(),
+            'date_of_birth' => $data['date_of_birth'] ?? null,
+            'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
+            'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
         ]);
 
         Auth::login($user);

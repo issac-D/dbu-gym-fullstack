@@ -16,7 +16,7 @@ class UpdateMemberStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'account_status' => ['required', 'in:active,inactive'],
+            'account_status' => ['required', 'in:PendingApproval,Active,Inactive'],
         ];
     }
 

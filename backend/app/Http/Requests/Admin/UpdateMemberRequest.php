@@ -25,11 +25,12 @@ class UpdateMemberRequest extends FormRequest
             'member_type' => ['sometimes', 'in:university,external'],
             'membership_type' => ['sometimes', 'in:Monthly,3Months,6Months,1Year'],
             'membership_plan' => ['nullable', 'string', 'max:50'],
+            'internal_role' => ['nullable', 'in:Student,Staff'],
             'university_id' => ['nullable', 'string', 'max:50'],
             'department' => ['nullable', 'string', 'max:100'],
             'national_id' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
-            'account_status' => ['nullable', 'in:active,inactive'],
+            'account_status' => ['nullable', 'in:PendingApproval,Active,Inactive'],
         ];
     }
 

@@ -28,6 +28,9 @@ class RegisterRequest extends FormRequest
             'department' => ['required_if:member_type,university', 'nullable', 'string', 'max:100'],
             'national_id' => ['required_if:member_type,external', 'nullable', 'string', 'max:100'],
             'address' => ['required_if:member_type,external', 'nullable', 'string', 'max:255'],
+            'date_of_birth' => ['nullable', 'date'],
+            'emergency_contact_name' => ['nullable', 'string', 'max:100'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:20'],
             'terms_accepted' => ['accepted'],
         ];
     }

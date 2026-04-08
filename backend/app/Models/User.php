@@ -36,6 +36,7 @@ use Laravel\Sanctum\HasApiTokens;
     'university_id',
     'department',
     'member_type',
+    'internal_role',
     'gender',
     'national_id',
     'address',

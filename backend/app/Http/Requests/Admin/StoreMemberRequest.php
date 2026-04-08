@@ -28,7 +28,8 @@ class StoreMemberRequest extends FormRequest
             'department' => ['required_if:member_type,university', 'nullable', 'string', 'max:100'],
             'national_id' => ['required_if:member_type,external', 'nullable', 'string', 'max:100'],
             'address' => ['required_if:member_type,external', 'nullable', 'string', 'max:255'],
-            'account_status' => ['nullable', 'in:active,inactive'],
+            'account_status' => ['nullable', 'in:PendingApproval,Active,Inactive'],
+            'internal_role' => ['nullable', 'in:Student,Staff'],
         ];
     }
 

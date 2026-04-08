@@ -516,7 +516,7 @@ export default function AdminDashboard() {
     phone: user.phone || 'N/A',
     joinDate: formatMemberDate(user.plan_start_at || user.created_at),
     expiryDate: formatMemberDate(user.plan_expires_at),
-    accountStatus: user.account_status || 'active',
+    accountStatus: (user.account_status || 'PendingApproval').toLowerCase(),
     gender: user.gender || '',
     email: user.email || '',
     universityId: user.university_id || '',
@@ -665,15 +665,20 @@ export default function AdminDashboard() {
   }
 
   const handleToggleStatus = async (member) => {
-    const nextStatus = member.accountStatus === 'inactive' ? 'active' : 'inactive'
-    const label = nextStatus === 'active' ? 'activate' : 'deactivate'
+    const nextStatus =
+      member.accountStatus === 'inactive'
+        ? 'Active'
+        : member.accountStatus === 'pendingapproval'
+        ? 'Active'
+        : 'Inactive'
+    const label = nextStatus === 'Active' ? 'activate' : 'deactivate'
     if (!window.confirm(`Are you sure you want to ${label} this member?`)) return
     try {
       await updateAdminMemberStatus(member.id, nextStatus)
       await loadMembers()
       setToast({
         type: 'success',
-        message: `Member ${nextStatus === 'active' ? 'activated' : 'deactivated'} successfully.`,
+        message: `Member ${nextStatus === 'Active' ? 'activated' : 'deactivated'} successfully.`,
       })
     } catch (err) {
       alert(err?.message || 'Unable to update status.')
@@ -1000,10 +1005,16 @@ export default function AdminDashboard() {
                           className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                             member.accountStatus === 'inactive'
                               ? 'bg-slate-500/20 text-slate-200'
+                              : member.accountStatus === 'pendingapproval'
+                              ? 'bg-amber-500/20 text-amber-200'
                               : 'bg-emerald-500/20 text-emerald-200'
                           }`}
                         >
-                          {member.accountStatus === 'inactive' ? 'Inactive' : 'Active'}
+                          {member.accountStatus === 'inactive'
+                            ? 'Inactive'
+                            : member.accountStatus === 'pendingapproval'
+                            ? 'Pending Approval'
+                            : 'Active'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -1024,7 +1035,11 @@ export default function AdminDashboard() {
                                 : 'border-amber-400/60 text-amber-200 hover:bg-amber-500/10'
                             }`}
                           >
-                            {member.accountStatus === 'inactive' ? 'Activate' : 'Deactivate'}
+                            {member.accountStatus === 'inactive'
+                              ? 'Activate'
+                              : member.accountStatus === 'pendingapproval'
+                              ? 'Activate'
+                              : 'Deactivate'}
                           </button>
                         </div>
                       </td>
