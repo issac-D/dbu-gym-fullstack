@@ -40,6 +40,8 @@ class UserResource extends JsonResource
             'rejected_by_name' => $this->rejectedBy?->name,
             'university_id' => $this->university_id,
             'department' => $this->department,
+            'admin_role' => $this->adminProfile?->admin_role,
+            'permissions_set' => $this->adminProfile?->permissions_set,
             'member_type' => $this->member_type,
             'internal_role' => $this->internal_role,
             'gender' => $this->gender,
