@@ -511,11 +511,18 @@ export default function AdminDashboard() {
     id: String(user.id),
     fullName: user.name || 'Unknown',
     membershipId: user.member_id || 'N/A',
-    membershipType: user.membership_plan || user.membership_type || 'N/A',
-    isUniversityMember: user.member_type === 'university',
+    membershipType:
+      user.member_profile?.membership_type ||
+      user.membership_plan ||
+      user.membership_type ||
+      'N/A',
+    isUniversityMember:
+      (user.member_profile?.member_type || user.member_type) === 'university',
     phone: user.phone || 'N/A',
     joinDate: formatMemberDate(user.plan_start_at || user.created_at),
-    expiryDate: formatMemberDate(user.plan_expires_at),
+    expiryDate: formatMemberDate(
+      user.member_profile?.membership_expiry_date || user.plan_expires_at
+    ),
     accountStatus: (user.account_status || 'PendingApproval').toLowerCase(),
     gender: user.gender || '',
     email: user.email || '',

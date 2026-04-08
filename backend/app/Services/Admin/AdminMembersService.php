@@ -12,7 +12,7 @@ class AdminMembersService
 {
     public function list(array $filters = [], int $perPage = 8): LengthAwarePaginator
     {
-        $query = User::query()->where('role', 'member');
+        $query = User::query()->where('role', 'member')->with('memberProfile');
 
         $search = trim((string) ($filters['search'] ?? ''));
         if ($search !== '') {

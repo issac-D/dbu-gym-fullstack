@@ -80,4 +80,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\Admin::class, 'user_id');
     }
+
+    public function memberProfile()
+    {
+        return $this->hasOne(\App\Models\Member::class, 'user_id');
+    }
 }

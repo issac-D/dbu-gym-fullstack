@@ -3,6 +3,7 @@
 namespace App\Services\Membership;
 
 use App\Models\User;
+use App\Models\Member;
 use Illuminate\Support\Carbon;
 
 class MembershipService
@@ -23,6 +24,15 @@ class MembershipService
             'payment_status' => 'Paid',
             'membership_status' => 'Active',
         ]);
+
+        Member::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'member_type' => $user->member_type,
+                'membership_type' => $selectedPlan,
+                'membership_expiry_date' => $expires?->toDateString(),
+            ]
+        );
 
         return $user->refresh();
     }
