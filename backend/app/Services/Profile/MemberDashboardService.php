@@ -27,6 +27,9 @@ class MemberDashboardService
                 'department' => $user->department,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'date_of_birth' => $memberProfile?->date_of_birth,
+                'emergency_contact_name' => $memberProfile?->emergency_contact_name,
+                'emergency_contact_phone' => $memberProfile?->emergency_contact_phone,
                 'avatar_url' => $user->avatar_path ? url(\Illuminate\Support\Facades\Storage::url($user->avatar_path)) : null,
             ],
             'plan' => [

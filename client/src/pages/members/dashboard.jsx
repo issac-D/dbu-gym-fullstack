@@ -161,7 +161,7 @@ export default function Dashboard() {
 
               <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] p-4">
                 <p className="text-sm font-semibold text-[var(--text-muted)]">
-                  Identity Verification
+                  Identity & Emergency
                 </p>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2">
                   <div>
@@ -175,6 +175,27 @@ export default function Dashboard() {
                       Department
                     </p>
                     <p className="mt-2 text-sm font-semibold">{memberInfo.department || member.department}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                      Date of Birth
+                    </p>
+                    <p className="mt-2 text-sm font-semibold">
+                      {memberInfo.date_of_birth
+                        ? new Date(memberInfo.date_of_birth).toLocaleDateString()
+                        : 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                      Emergency Contact
+                    </p>
+                    <p className="mt-2 text-sm font-semibold">
+                      {memberInfo.emergency_contact_name || 'Not set'}
+                    </p>
+                    <p className="text-xs text-[var(--text-soft)]">
+                      {memberInfo.emergency_contact_phone || ''}
+                    </p>
                   </div>
                 </div>
               </div>
