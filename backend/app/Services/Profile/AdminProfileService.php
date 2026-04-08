@@ -3,6 +3,7 @@
 namespace App\Services\Profile;
 
 use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,16 @@ class AdminProfileService
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
         ]);
+
+        if ($user->role === 'admin') {
+            Admin::query()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'admin_role' => $data['admin_role'] ?? 'System Admin',
+                    'permissions_set' => $data['permissions_set'] ?? null,
+                ]
+            );
+        }
 
         return $user->refresh();
     }

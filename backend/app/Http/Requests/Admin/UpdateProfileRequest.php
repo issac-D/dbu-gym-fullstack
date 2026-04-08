@@ -21,6 +21,8 @@ class UpdateProfileRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $userId],
             'email_confirmation' => ['required', 'same:email'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'admin_role' => ['nullable', 'string', 'max:50'],
+            'permissions_set' => ['nullable', 'string'],
         ];
     }
 }

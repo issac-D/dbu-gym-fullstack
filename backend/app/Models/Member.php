@@ -8,6 +8,7 @@ class Member extends Model
 {
     protected $fillable = [
         'user_id',
+        'member_type',
         'membership_type',
         'membership_expiry_date',
         'date_of_birth',

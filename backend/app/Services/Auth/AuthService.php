@@ -44,8 +44,9 @@ class AuthService
 
         Member::query()->create([
             'user_id' => $user->id,
-            'membership_type' => $data['member_type'] === 'external' ? 'External' : 'Student',
-            'membership_expiry_date' => $planExpires?->toDateString() ?? now()->toDateString(),
+            'member_type' => $data['member_type'] ?? null,
+            'membership_type' => $data['membership_type'] ?? null,
+            'membership_expiry_date' => $planExpires?->toDateString(),
             'date_of_birth' => $data['date_of_birth'] ?? null,
             'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
             'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,

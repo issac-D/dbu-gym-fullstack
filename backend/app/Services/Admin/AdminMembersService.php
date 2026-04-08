@@ -79,8 +79,9 @@ class AdminMembersService
 
         Member::query()->create([
             'user_id' => $user->id,
-            'membership_type' => $data['member_type'] === 'external' ? 'External' : 'Student',
-            'membership_expiry_date' => $planExpires?->toDateString() ?? now()->toDateString(),
+            'member_type' => $data['member_type'] ?? null,
+            'membership_type' => $data['membership_type'] ?? null,
+            'membership_expiry_date' => $planExpires?->toDateString(),
             'date_of_birth' => $data['date_of_birth'] ?? null,
             'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
             'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
@@ -134,15 +135,19 @@ class AdminMembersService
         $member = Member::query()->firstOrCreate(
             ['user_id' => $user->id],
             [
-                'membership_type' => $user->member_type === 'external' ? 'External' : 'Student',
-                'membership_expiry_date' => $user->plan_expires_at?->toDateString() ?? now()->toDateString(),
+                'member_type' => $user->member_type,
+                'membership_type' => $user->membership_type,
+                'membership_expiry_date' => $user->plan_expires_at?->toDateString(),
             ]
         );
 
         if (array_key_exists('member_type', $data)) {
-            $member->membership_type = $user->member_type === 'external' ? 'External' : 'Student';
+            $member->member_type = $user->member_type;
         }
-        if (array_key_exists('membership_type', $data) && $user->plan_expires_at) {
+        if (array_key_exists('membership_type', $data)) {
+            $member->membership_type = $user->membership_type;
+        }
+        if ((array_key_exists('membership_type', $data) || array_key_exists('member_type', $data)) && $user->plan_expires_at) {
             $member->membership_expiry_date = $user->plan_expires_at->toDateString();
         }
         $member->save();

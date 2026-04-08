@@ -75,4 +75,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(User::class, 'rejected_by');
     }
+
+    public function adminProfile()
+    {
+        return $this->hasOne(\App\Models\Admin::class, 'user_id');
+    }
 }
