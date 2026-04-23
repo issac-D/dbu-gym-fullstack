@@ -46,23 +46,29 @@ class ChapaPaymentService
             'registration_payload' => $registrationPayload,
         ]);
 
+        $requestPayload = [
+            'amount' => (string) $amount,
+            'currency' => 'ETB',
+            'email' => $payload['email'],
+            'first_name' => $splitName['first_name'],
+            'last_name' => $splitName['last_name'],
+            'tx_ref' => $txRef,
+            'callback_url' => $payload['callback_url'] ?? config('services.chapa.callback_url'),
+            'return_url' => $payload['return_url'] ?? config('services.chapa.return_url'),
+            'customization' => [
+                'title' => 'DBU Gym Payment',
+                'description' => 'Membership plan payment for registration',
+            ],
+        ];
+
+        $normalizedPhone = $this->normalizePhoneForChapa($payload['phone'] ?? null);
+        if ($normalizedPhone !== null) {
+            $requestPayload['phone_number'] = $normalizedPhone;
+        }
+
         $response = Http::withToken($this->secretKey())
             ->acceptJson()
-            ->post(rtrim((string) config('services.chapa.base_url'), '/') . '/transaction/initialize', [
-                'amount' => (string) $amount,
-                'currency' => 'ETB',
-                'email' => $payload['email'],
-                'first_name' => $splitName['first_name'],
-                'last_name' => $splitName['last_name'],
-                'phone_number' => $payload['phone'],
-                'tx_ref' => $txRef,
-                'callback_url' => $payload['callback_url'] ?? config('services.chapa.callback_url'),
-                'return_url' => $payload['return_url'] ?? config('services.chapa.return_url'),
-                'customization' => [
-                    'title' => 'DBU Gym Payment',
-                    'description' => 'Membership plan payment for registration',
-                ],
-            ]);
+            ->post(rtrim((string) config('services.chapa.base_url'), '/') . '/transaction/initialize', $requestPayload);
 
         $body = $response->json() ?? [];
         $checkoutUrl = Arr::get($body, 'data.checkout_url');
@@ -225,6 +231,32 @@ class ChapaPaymentService
             'first_name' => $first,
             'last_name' => $last,
         ];
+    }
+
+    private function normalizePhoneForChapa(?string $phone): ?string
+    {
+        if (!$phone) {
+            return null;
+        }
+
+        $normalized = preg_replace('/\s+/', '', trim($phone));
+        if (!$normalized) {
+            return null;
+        }
+
+        if (str_starts_with($normalized, '+251') && strlen($normalized) === 13) {
+            return $normalized;
+        }
+
+        if ((str_starts_with($normalized, '09') || str_starts_with($normalized, '07')) && strlen($normalized) === 10) {
+            return '+251' . substr($normalized, 1);
+        }
+
+        if ((str_starts_with($normalized, '2519') || str_starts_with($normalized, '2517')) && strlen($normalized) === 12) {
+            return '+' . $normalized;
+        }
+
+        return null;
     }
 
     private function secretKey(): string
