@@ -59,7 +59,7 @@ class ChapaPaymentService
                 'callback_url' => $payload['callback_url'] ?? config('services.chapa.callback_url'),
                 'return_url' => $payload['return_url'] ?? config('services.chapa.return_url'),
                 'customization' => [
-                    'title' => 'DBU Gym Membership Registration',
+                    'title' => 'DBU Gym Payment',
                     'description' => 'Membership plan payment for registration',
                 ],
             ]);
@@ -73,7 +73,7 @@ class ChapaPaymentService
         ]);
 
         if (!$response->successful() || !$checkoutUrl) {
-            throw new RuntimeException(Arr::get($body, 'message', 'Failed to initialize Chapa payment.'));
+            throw new RuntimeException($this->normalizeGatewayMessage($body, 'Failed to initialize Chapa payment.'));
         }
 
         return $transaction->refresh();
@@ -108,7 +108,7 @@ class ChapaPaymentService
                 $transaction->update([
                     'status' => 'failed',
                     'failed_at' => now(),
-                    'failure_reason' => Arr::get($body, 'message', 'Payment verification failed.'),
+                    'failure_reason' => $this->normalizeGatewayMessage($body, 'Payment verification failed.'),
                     'gateway_response' => $body,
                 ]);
 
@@ -235,5 +235,33 @@ class ChapaPaymentService
         }
 
         return $secret;
+    }
+
+    private function normalizeGatewayMessage(array $body, string $fallback): string
+    {
+        $message = Arr::get($body, 'message', $fallback);
+
+        if (is_string($message)) {
+            return $message;
+        }
+
+        if (is_array($message)) {
+            $flattened = [];
+            array_walk_recursive($message, function ($value) use (&$flattened) {
+                if (is_scalar($value)) {
+                    $flattened[] = (string) $value;
+                }
+            });
+
+            if ($flattened !== []) {
+                return implode(' ', $flattened);
+            }
+        }
+
+        if (is_scalar($message)) {
+            return (string) $message;
+        }
+
+        return $fallback;
     }
 }
