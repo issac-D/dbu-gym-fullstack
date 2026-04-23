@@ -54,7 +54,7 @@ class ChapaPaymentService
             'last_name' => $splitName['last_name'],
             'tx_ref' => $txRef,
             'callback_url' => $payload['callback_url'] ?? config('services.chapa.callback_url'),
-            'return_url' => $payload['return_url'] ?? config('services.chapa.return_url'),
+            'return_url' => $this->appendTxRefToUrl($payload['return_url'] ?? config('services.chapa.return_url'), $txRef),
             'customization' => [
                 'title' => 'DBU Gym Payment',
                 'description' => 'Membership plan payment for registration',
@@ -295,5 +295,21 @@ class ChapaPaymentService
         }
 
         return $fallback;
+    }
+
+    private function appendTxRefToUrl(?string $url, string $txRef): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+
+        $trimmed = trim($url);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $separator = str_contains($trimmed, '?') ? '&' : '?';
+
+        return $trimmed . $separator . 'tx_ref=' . rawurlencode($txRef);
     }
 }

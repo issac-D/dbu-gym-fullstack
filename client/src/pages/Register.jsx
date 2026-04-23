@@ -221,6 +221,9 @@ export default function Register() {
       if (!response?.data?.checkout_url) {
         throw new Error('Missing Chapa checkout URL.')
       }
+      if (response?.data?.tx_ref) {
+        window.localStorage.setItem('dbu_pending_tx_ref', response.data.tx_ref)
+      }
 
       window.location.assign(response.data.checkout_url)
     } catch (err) {

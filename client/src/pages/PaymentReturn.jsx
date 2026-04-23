@@ -9,7 +9,12 @@ export default function PaymentReturn() {
   const [message, setMessage] = useState('Verifying your payment...')
 
   const txRef = useMemo(
-    () => searchParams.get('tx_ref') || searchParams.get('trx_ref') || searchParams.get('reference') || '',
+    () =>
+      searchParams.get('tx_ref') ||
+      searchParams.get('trx_ref') ||
+      searchParams.get('reference') ||
+      window.localStorage.getItem('dbu_pending_tx_ref') ||
+      '',
     [searchParams]
   )
 
@@ -29,6 +34,7 @@ export default function PaymentReturn() {
         if (!active) return
 
         if (response?.data?.status === 'success') {
+          window.localStorage.removeItem('dbu_pending_tx_ref')
           setStatus('success')
           setMessage('Payment verified. Redirecting to pending approval page...')
           window.setTimeout(() => {
