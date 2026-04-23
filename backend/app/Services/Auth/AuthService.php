@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthService
 {
-    public function register(array $data): User
+    public function register(array $data, bool $login = true): User
     {
         $memberId = $this->generateMemberId($data['member_type'] ?? null);
         $plan = $data['membership_type'] ?? null;
@@ -21,7 +21,7 @@ class AuthService
         $user = User::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password_hashed'] ?? Hash::make($data['password']),
             'role' => 'member',
             'account_status' => 'PendingApproval',
             'phone' => $data['phone'] ?? null,
@@ -30,7 +30,7 @@ class AuthService
             'membership_type' => $data['membership_type'] ?? null,
             'membership_plan' => $data['membership_plan'] ?? null,
             'membership_status' => 'pending',
-            'payment_status' => 'Paid',
+            'payment_status' => $data['payment_status'] ?? 'Paid',
             'plan_start_at' => $planStart,
             'plan_expires_at' => $planExpires,
             'plan_cost' => $planCost,
@@ -39,7 +39,9 @@ class AuthService
             'national_id' => $data['national_id'] ?? null,
             'address' => $data['address'] ?? null,
             'member_id' => $memberId,
-            'terms_accepted_at' => now(),
+            'terms_accepted_at' => isset($data['terms_accepted_at'])
+                ? \Illuminate\Support\Carbon::parse($data['terms_accepted_at'])
+                : now(),
         ]);
 
         Member::query()->create([
@@ -52,7 +54,9 @@ class AuthService
             'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
         ]);
 
-        Auth::login($user);
+        if ($login) {
+            Auth::login($user);
+        }
 
         return $user;
     }

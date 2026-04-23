@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
 use App\Http\Controllers\Member\MembershipController as MemberMembershipController;
 use App\Http\Controllers\Member\ProfileController as MemberProfileController;
+use App\Http\Controllers\Payment\ChapaPaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,12 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
+});
+
+Route::prefix('payments/chapa')->group(function () {
+    Route::post('/initialize', [ChapaPaymentController::class, 'initialize'])->middleware('guest');
+    Route::get('/verify/{txRef}', [ChapaPaymentController::class, 'verify'])->middleware('guest');
+    Route::post('/webhook', [ChapaPaymentController::class, 'webhook']);
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
