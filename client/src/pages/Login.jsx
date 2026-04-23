@@ -89,6 +89,14 @@ export default function Login() {
     try {
       const user = await login({ email: trimmedEmail, password })
       const resolvedRole = user?.role === 'admin' ? 'admin' : 'member'
+      if (
+        resolvedRole === 'member' &&
+        String(user?.account_status || '').toLowerCase() === 'pendingapproval'
+      ) {
+        navigate('/pending-approval')
+        return
+      }
+
       navigate(resolvedRole === 'admin' ? '/admin/dashboard' : '/members/dashboard')
     } catch (err) {
       setError(err?.message || 'Login failed. Please try again.')

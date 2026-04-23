@@ -55,6 +55,19 @@ export async function register(payload) {
   })
 }
 
+export async function initializeChapaPayment(payload) {
+  return request('/api/payments/chapa/initialize', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function verifyChapaPayment(txRef) {
+  return request(`/api/payments/chapa/verify/${encodeURIComponent(txRef)}`, {
+    method: 'GET',
+  })
+}
+
 export async function logout() {
   return request('/api/auth/logout', {
     method: 'POST',

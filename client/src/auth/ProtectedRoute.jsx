@@ -31,5 +31,12 @@ export default function ProtectedRoute({ role }) {
     return <Navigate to="/" replace />
   }
 
+  if (
+    role === 'member' &&
+    String(user?.account_status || '').toLowerCase() === 'pendingapproval'
+  ) {
+    return <Navigate to="/pending-approval" replace />
+  }
+
   return <Outlet />
 }

@@ -7,6 +7,8 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Terms from './pages/Terms'
+import PaymentReturn from './pages/PaymentReturn'
+import PendingApproval from './pages/PendingApproval'
 import MembersDashboard from './pages/members/dashboard'
 import EditProfile from './pages/members/EditProfile'
 import AdminDashboard from './pages/admin/Dashboard'
@@ -77,6 +79,8 @@ export default function App() {
       <Route path="/forgot" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/payments/chapa/return" element={<PaymentReturn />} />
+      <Route path="/pending-approval" element={<PendingApproval />} />
 
       <Route element={<ProtectedRoute role="member" />}>
         <Route path="/members/dashboard" element={<MembersDashboard />} />
