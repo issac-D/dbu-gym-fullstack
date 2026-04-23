@@ -1,7 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
-import { useAuth } from '../auth/AuthProvider'
-import { uploadMemberAvatar } from '../lib/api'
+import { initializeChapaPayment } from '../lib/api'
 
 function DumbbellIcon({ className }) {
   return (
@@ -83,8 +82,6 @@ function UserIcon({ className }) {
 }
 
 export default function Register() {
-  const navigate = useNavigate()
-  const { register } = useAuth()
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -92,7 +89,6 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [memberType, setMemberType] = useState('university')
-  const [avatarFile, setAvatarFile] = useState(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [formValues, setFormValues] = useState({
     name: '',
@@ -108,7 +104,6 @@ export default function Register() {
     address: '',
   })
   const [phoneError, setPhoneError] = useState('')
-  const [passwordTouched, setPasswordTouched] = useState(false)
 
   const isUniversity = memberType === 'university'
   const submitLabel = useMemo(() => (submitting ? 'Submitting…' : 'Proceed to Payment'), [submitting])
@@ -161,11 +156,6 @@ export default function Register() {
   const hasMinLength = formValues.password.length >= 8
   const hasNumberOrSymbol = /[0-9]/.test(formValues.password) && /[!@#$%^&*]/.test(formValues.password)
   const passwordStrong = hasMinLength && hasNumberOrSymbol
-
-  const handleFileChange = (event) => {
-    const file = event.target.files?.[0]
-    setAvatarFile(file || null)
-  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -220,22 +210,27 @@ export default function Register() {
     setSubmitting(true)
 
     try {
-      await register({
+      const origin = window.location.origin
+      const response = await initializeChapaPayment({
         ...payload,
         membership_plan: payload.membership_type,
+        return_url: `${origin}/payments/chapa/return`,
+        callback_url: `${origin}/payments/chapa/return`,
       })
-      if (avatarFile) {
-        await uploadMemberAvatar(avatarFile)
+
+      if (!response?.data?.checkout_url) {
+        throw new Error('Missing Chapa checkout URL.')
       }
-      navigate('/members/dashboard')
+
+      window.location.assign(response.data.checkout_url)
     } catch (err) {
-      setError(err?.message || 'Registration failed. Please try again.')
+      setError(err?.message || 'Could not start payment. Please try again.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const stepLabels = ['Account', 'Membership', 'Profile']
+  const stepLabels = ['Account', 'Membership', 'Payment']
 
   const canProceedStep = () => {
     if (step === 1) {
@@ -270,26 +265,27 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-25" />
-      <div className="absolute inset-0 bg-black/70" />
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_20%_10%,rgba(81,204,249,0.25),transparent_35%),radial-gradient(circle_at_90%_85%,rgba(16,185,129,0.15),transparent_35%),linear-gradient(145deg,#070b10,#101826)] text-[var(--text)]">
+      <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-emerald-400/15 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.18),rgba(0,0,0,0.58))]" />
 
       <main className="relative z-10 flex min-h-screen items-center justify-center px-6 py-16">
         <div className="w-full max-w-4xl">
           <div className="mb-6 text-center">
             <Link
               to="/"
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-[var(--accent)] shadow-[0_0_30px_var(--accent-glow)]"
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[var(--accent)] shadow-[0_0_30px_var(--accent-glow)]"
             >
               <DumbbellIcon className="h-8 w-8" />
             </Link>
-            <h1 className="font-display text-3xl font-semibold text-white">
+            <h1 className="font-display text-3xl font-semibold text-slate-100">
               Join DBU Gym
             </h1>
-            <p className="mt-2 text-sm text-white/70">Create your account</p>
+            <p className="mt-2 text-sm text-slate-200/75">Create your account</p>
           </div>
 
-          <div className="glass-panel rounded-3xl p-6 shadow-2xl md:p-8">
+          <div className="glass-panel rounded-3xl border border-white/15 p-6 shadow-2xl backdrop-blur-xl md:p-8">
             <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="uppercase tracking-[0.3em] text-white/40">Registration Steps</span>
@@ -422,10 +418,7 @@ export default function Register() {
                           type={showPassword ? 'text' : 'password'}
                           name="password"
                           value={formValues.password}
-                          onChange={(event) => {
-                            setPasswordTouched(true)
-                            handleChange(event)
-                          }}
+                          onChange={handleChange}
                           placeholder="••••••••"
                           disabled={submitting}
                           className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
@@ -601,16 +594,10 @@ export default function Register() {
 
               {step === 3 ? (
                 <div className="animate-fade-up">
-                  <label className="block text-sm text-white/70">
-                    Profile Picture
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      disabled={submitting}
-                      className="mt-2 w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-[var(--accent)] file:px-3 file:py-1 file:text-xs file:font-semibold file:text-black"
-                    />
-                  </label>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
+                    After clicking <span className="font-semibold text-[var(--accent)]">Perform Payment</span>,
+                    you will be redirected to Chapa checkout to complete your payment.
+                  </div>
 
                   <label className="flex items-center gap-2 text-xs text-white/70">
                     <input
@@ -658,7 +645,7 @@ export default function Register() {
                     {submitting ? (
                       <span className="inline-flex items-center justify-center gap-2">
                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/60 border-t-transparent"></span>
-                        Submitting…
+                        Redirecting…
                       </span>
                     ) : (
                       submitLabel

@@ -231,7 +231,7 @@ class ChapaPaymentService
     {
         $secret = (string) config('services.chapa.secret_key');
         if ($secret === '') {
-            throw new RuntimeException('CHAPA_SECRET_KEY is not configured.');
+            throw new RuntimeException('Payment secret key is missing. Set CHAPA_SECRET_KEY or PAYMENT_SECRET_KEY in backend/.env.');
         }
 
         return $secret;

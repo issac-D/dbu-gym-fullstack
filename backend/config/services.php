@@ -36,13 +36,13 @@ return [
     ],
 
     'chapa' => [
-        'public_key' => env('CHAPA_PUBLIC_KEY'),
-        'secret_key' => env('CHAPA_SECRET_KEY'),
-        'encryption_key' => env('CHAPA_ENCRYPTION_KEY'),
+        'public_key' => env('CHAPA_PUBLIC_KEY', env('PAYMENT_PUBLIC_KEY')),
+        'secret_key' => env('CHAPA_SECRET_KEY', env('PAYMENT_SECRET_KEY')),
+        'encryption_key' => env('CHAPA_ENCRYPTION_KEY', env('PAYMENT_ENCRYPTION_KEY')),
         'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET'),
         'base_url' => env('CHAPA_BASE_URL', 'https://api.chapa.co/v1'),
-        'callback_url' => env('CHAPA_CALLBACK_URL'),
-        'return_url' => env('CHAPA_RETURN_URL'),
+        'callback_url' => env('CHAPA_CALLBACK_URL', env('CHAPA_WEBHOOK_URL')),
+        'return_url' => env('CHAPA_RETURN_URL', env('APP_URL')),
     ],
 
 ];
