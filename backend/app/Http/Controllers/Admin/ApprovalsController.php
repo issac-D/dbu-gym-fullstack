@@ -38,7 +38,16 @@ class ApprovalsController extends Controller
 
     public function history(Request $request): JsonResponse
     {
-        $filters = $request->only(['status', 'search', 'member_type', 'from_date', 'to_date']);
+        $filters = $request->only([
+            'status',
+            'search',
+            'member_type',
+            'payment_status',
+            'min_plan_cost',
+            'max_plan_cost',
+            'from_date',
+            'to_date',
+        ]);
         $history = $this->service->listHistory($filters);
 
         return response()->json([
@@ -87,7 +96,16 @@ class ApprovalsController extends Controller
 
     public function exportHistory(Request $request): StreamedResponse
     {
-        $filters = $request->only(['status', 'search', 'member_type', 'from_date', 'to_date']);
+        $filters = $request->only([
+            'status',
+            'search',
+            'member_type',
+            'payment_status',
+            'min_plan_cost',
+            'max_plan_cost',
+            'from_date',
+            'to_date',
+        ]);
         $rows = $this->service->listHistory($filters);
 
         $filename = 'approval-history-' . now()->format('Y-m-d') . '.csv';

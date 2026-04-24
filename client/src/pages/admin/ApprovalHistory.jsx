@@ -11,6 +11,9 @@ export default function ApprovalHistory() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
+  const [minPlanCost, setMinPlanCost] = useState('')
+  const [maxPlanCost, setMaxPlanCost] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [sortBy, setSortBy] = useState('date_desc')
@@ -33,6 +36,9 @@ export default function ApprovalHistory() {
             status: statusFilter || 'all',
             search,
             member_type: typeFilter || undefined,
+            payment_status: paymentStatusFilter === 'all' ? undefined : paymentStatusFilter,
+            min_plan_cost: minPlanCost || undefined,
+            max_plan_cost: maxPlanCost || undefined,
             from_date: fromDate || undefined,
             to_date: toDate || undefined,
           })
@@ -71,7 +77,7 @@ export default function ApprovalHistory() {
       clearTimeout(timeout)
       active = false
     }
-  }, [search, statusFilter, typeFilter, fromDate, toDate])
+  }, [search, statusFilter, typeFilter, paymentStatusFilter, minPlanCost, maxPlanCost, fromDate, toDate])
 
   const sortedRecords = useMemo(() => {
     const statusOrder = { approved: 1, active: 1, rejected: 2, pending: 3, '': 4 }
@@ -114,6 +120,9 @@ export default function ApprovalHistory() {
         status: statusFilter || 'all',
         search,
         member_type: typeFilter || undefined,
+        payment_status: paymentStatusFilter === 'all' ? undefined : paymentStatusFilter,
+        min_plan_cost: minPlanCost || undefined,
+        max_plan_cost: maxPlanCost || undefined,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
       })
@@ -147,7 +156,7 @@ export default function ApprovalHistory() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-[2fr_1fr_1fr_1fr]">
+        <div className="mt-6 grid gap-3 md:grid-cols-[2fr_1fr_1fr_1fr_1fr]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -181,8 +190,38 @@ export default function ApprovalHistory() {
             <option value="date_asc">Oldest First</option>
             <option value="status">Status Grouped</option>
           </select>
+          <select
+            value={paymentStatusFilter}
+            onChange={(event) => setPaymentStatusFilter(event.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+          >
+            <option value="all">All Payment</option>
+            <option value="Paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+          </select>
         </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div className="mt-3 grid gap-3 md:grid-cols-4">
+          <label className="text-xs text-[var(--text-soft)]">
+            Min Plan Cost (ETB)
+            <input
+              type="number"
+              min="0"
+              value={minPlanCost}
+              onChange={(event) => setMinPlanCost(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+            />
+          </label>
+          <label className="text-xs text-[var(--text-soft)]">
+            Max Plan Cost (ETB)
+            <input
+              type="number"
+              min="0"
+              value={maxPlanCost}
+              onChange={(event) => setMaxPlanCost(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+            />
+          </label>
           <label className="text-xs text-[var(--text-soft)]">
             From
             <input
@@ -238,6 +277,9 @@ export default function ApprovalHistory() {
               onClick={() => {
                 setFromDate('')
                 setToDate('')
+                setMinPlanCost('')
+                setMaxPlanCost('')
+                setPaymentStatusFilter('all')
               }}
               className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
             >
