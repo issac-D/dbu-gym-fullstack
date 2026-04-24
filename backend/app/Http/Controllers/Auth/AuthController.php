@@ -19,6 +19,12 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
+        if (!filter_var((string) env('ALLOW_DIRECT_REGISTRATION', false), FILTER_VALIDATE_BOOL)) {
+            return response()->json([
+                'message' => 'Direct registration is disabled. Please complete payment first.',
+            ], 403);
+        }
+
         $payload = $request->validated();
 
         if (User::query()->where('email', $payload['email'])->exists()) {
