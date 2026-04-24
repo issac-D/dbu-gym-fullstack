@@ -101,6 +101,7 @@ class ApprovalService
     public function approve(User $user, User $admin): User
     {
         $user->update([
+            'account_status' => 'Active',
             'membership_status' => 'Active',
             'approved_by' => $admin->id,
             'approved_at' => Carbon::now(),
@@ -115,6 +116,7 @@ class ApprovalService
     public function reject(User $user, User $admin, ?string $reason = null): User
     {
         $user->update([
+            'account_status' => 'Inactive',
             'membership_status' => 'rejected',
             'rejected_by' => $admin->id,
             'rejected_at' => Carbon::now(),
