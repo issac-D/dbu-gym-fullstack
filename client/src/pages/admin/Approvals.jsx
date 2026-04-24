@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import AdminNavbar from '../../components/AdminNavbar'
 import Footer from '../../components/Footer'
 import {
@@ -52,10 +52,16 @@ export default function Approvals() {
             email: user.email,
             membershipId: user.member_id || 'N/A',
             membershipType: user.membership_type || 'N/A',
+            membershipPlan: user.membership_plan || user.membership_type || 'N/A',
+            planCost: user.plan_cost ?? null,
             isUniversityMember: user.member_type === 'university',
             universityId: user.university_id || '',
+            department: user.department || '',
             nationalId: user.national_id || '',
+            address: user.address || '',
+            gender: user.gender || '',
             phone: user.phone || '',
+            paymentStatus: (user.payment_status || '').toLowerCase() || 'pending',
             status: (user.membership_status || '').toLowerCase(),
           }))
           setPending(rows)
@@ -98,13 +104,6 @@ export default function Approvals() {
       setError(err?.message || 'Failed to reject member.')
     }
   }
-
-  const proofId = useMemo(() => {
-    if (!selected) return ''
-    return selected.isUniversityMember
-      ? selected.universityId
-      : selected.nationalId || 'N/A'
-  }, [selected])
 
   const formatDate = (date) => {
     const year = date.getFullYear()
@@ -182,10 +181,16 @@ export default function Approvals() {
                       email: user.email,
                       membershipId: user.member_id || 'N/A',
                       membershipType: user.membership_type || 'N/A',
+                      membershipPlan: user.membership_plan || user.membership_type || 'N/A',
+                      planCost: user.plan_cost ?? null,
                       isUniversityMember: user.member_type === 'university',
                       universityId: user.university_id || '',
+                      department: user.department || '',
                       nationalId: user.national_id || '',
+                      address: user.address || '',
+                      gender: user.gender || '',
                       phone: user.phone || '',
+                      paymentStatus: (user.payment_status || '').toLowerCase() || 'pending',
                       status: (user.membership_status || '').toLowerCase(),
                     }))
                     setPending(rows)
@@ -420,16 +425,52 @@ export default function Approvals() {
                 </span>
               </div>
               <div className="mt-2 flex justify-between gap-4">
-                <span className="text-[var(--text-soft)]">ID / Dept</span>
-                <span className="font-semibold">{proofId}</span>
+                <span className="text-[var(--text-soft)]">Plan Paid</span>
+                <span className="font-semibold">
+                  {selected.membershipPlan}
+                  {selected.planCost ? ` (${selected.planCost} ETB)` : ''}
+                </span>
               </div>
               <div className="mt-2 flex justify-between gap-4">
                 <span className="text-[var(--text-soft)]">Phone</span>
                 <span className="font-semibold">{selected.phone}</span>
               </div>
               <div className="mt-2 flex justify-between gap-4">
+                <span className="text-[var(--text-soft)]">Sex</span>
+                <span className="font-semibold">{selected.gender || 'N/A'}</span>
+              </div>
+              {selected.isUniversityMember ? (
+                <>
+                  <div className="mt-2 flex justify-between gap-4">
+                    <span className="text-[var(--text-soft)]">University ID</span>
+                    <span className="font-semibold">{selected.universityId || 'N/A'}</span>
+                  </div>
+                  <div className="mt-2 flex justify-between gap-4">
+                    <span className="text-[var(--text-soft)]">Department/College</span>
+                    <span className="font-semibold">{selected.department || 'N/A'}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mt-2 flex justify-between gap-4">
+                    <span className="text-[var(--text-soft)]">FAN / National ID</span>
+                    <span className="font-semibold">{selected.nationalId || 'N/A'}</span>
+                  </div>
+                  <div className="mt-2 flex justify-between gap-4">
+                    <span className="text-[var(--text-soft)]">Address</span>
+                    <span className="font-semibold">{selected.address || 'N/A'}</span>
+                  </div>
+                </>
+              )}
+              <div className="mt-2 flex justify-between gap-4">
                 <span className="text-[var(--text-soft)]">Payment</span>
-                <span className="font-semibold text-emerald-200">Paid</span>
+                <span
+                  className={`font-semibold ${
+                    selected.paymentStatus === 'paid' ? 'text-emerald-200' : 'text-amber-200'
+                  }`}
+                >
+                  {selected.paymentStatus || 'pending'}
+                </span>
               </div>
             </div>
 
