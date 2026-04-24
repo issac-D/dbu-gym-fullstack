@@ -53,14 +53,19 @@ class ChapaPaymentController extends Controller
         }
 
         $statusCode = $transaction->status === 'success' ? 200 : 422;
+        $failureReason = $transaction->failure_reason;
+        $message = $transaction->status === 'success'
+            ? 'Payment verified successfully.'
+            : ($failureReason
+                ? 'Payment verification failed: ' . $failureReason
+                : 'Payment verification failed.');
 
         return response()->json([
-            'message' => $transaction->status === 'success'
-                ? 'Payment verified successfully.'
-                : 'Payment verification failed.',
+            'message' => $message,
             'data' => [
                 'tx_ref' => $transaction->tx_ref,
                 'status' => $transaction->status,
+                'failure_reason' => $failureReason,
                 'account_status' => $transaction->user?->account_status,
                 'payment_status' => $transaction->user?->payment_status,
                 'user_id' => $transaction->user_id,

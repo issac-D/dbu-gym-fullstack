@@ -18,7 +18,16 @@ class ApprovalsController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->only(['status', 'search', 'member_type', 'from_date', 'to_date']);
+        $filters = $request->only([
+            'status',
+            'search',
+            'member_type',
+            'payment_status',
+            'min_plan_cost',
+            'max_plan_cost',
+            'from_date',
+            'to_date',
+        ]);
         $pending = $this->service->list($filters);
 
         return response()->json([
@@ -40,7 +49,16 @@ class ApprovalsController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $filters = $request->only(['status', 'search', 'member_type', 'from_date', 'to_date']);
+        $filters = $request->only([
+            'status',
+            'search',
+            'member_type',
+            'payment_status',
+            'min_plan_cost',
+            'max_plan_cost',
+            'from_date',
+            'to_date',
+        ]);
         $rows = $this->service->list($filters);
 
         $filename = 'approvals-' . now()->format('Y-m-d') . '.csv';

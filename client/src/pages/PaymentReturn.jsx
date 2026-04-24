@@ -7,6 +7,7 @@ export default function PaymentReturn() {
   const [searchParams] = useSearchParams()
   const [status, setStatus] = useState('verifying')
   const [message, setMessage] = useState('Verifying your payment...')
+  const [details, setDetails] = useState('')
 
   const txRef = useMemo(
     () =>
@@ -20,12 +21,45 @@ export default function PaymentReturn() {
 
   useEffect(() => {
     let active = true
+    const getFailureCopy = (raw) => {
+      const text = String(raw || '').toLowerCase()
+      if (text.includes('missing transaction reference')) {
+        return {
+          title: 'We could not detect your payment reference.',
+          details: 'Please retry from registration. If payment was already charged, contact support with your receipt.',
+        }
+      }
+      if (text.includes('cancel')) {
+        return {
+          title: 'Payment was canceled before completion.',
+          details: 'You can return to registration and try payment again.',
+        }
+      }
+      if (text.includes('insufficient') || text.includes('declin')) {
+        return {
+          title: 'Payment was not approved by your bank or wallet.',
+          details: 'Use another payment method or retry after confirming your balance.',
+        }
+      }
+      if (text.includes('expired') || text.includes('timeout')) {
+        return {
+          title: 'The payment session expired.',
+          details: 'Please restart payment from registration.',
+        }
+      }
+      return {
+        title: 'Payment verification failed.',
+        details: raw || 'Please try again or contact support with your transaction reference.',
+      }
+    }
 
     const verifyPayment = async () => {
       if (!txRef) {
         if (!active) return
+        const copy = getFailureCopy('missing transaction reference')
         setStatus('failed')
-        setMessage('Missing transaction reference. Please try registration again.')
+        setMessage(copy.title)
+        setDetails(copy.details)
         return
       }
 
@@ -37,18 +71,23 @@ export default function PaymentReturn() {
           window.localStorage.removeItem('dbu_pending_tx_ref')
           setStatus('success')
           setMessage('Payment verified. Redirecting to pending approval page...')
+          setDetails('')
           window.setTimeout(() => {
             navigate(`/pending-approval?tx_ref=${encodeURIComponent(txRef)}`, { replace: true })
           }, 1200)
           return
         }
 
+        const copy = getFailureCopy(response?.data?.failure_reason || response?.message)
         setStatus('failed')
-        setMessage('Payment could not be verified. Please contact support or try again.')
+        setMessage(copy.title)
+        setDetails(copy.details)
       } catch (err) {
         if (!active) return
+        const copy = getFailureCopy(err?.message)
         setStatus('failed')
-        setMessage(err?.message || 'Payment verification failed. Please try again.')
+        setMessage(copy.title)
+        setDetails(copy.details)
       }
     }
 
@@ -68,6 +107,7 @@ export default function PaymentReturn() {
         <div className="glass-panel z-10 w-full rounded-3xl border border-white/15 p-8 text-center shadow-2xl backdrop-blur-xl">
           <h1 className="font-display text-2xl font-semibold text-slate-100">Payment Status</h1>
           <p className="mt-4 text-sm text-slate-200/80">{message}</p>
+          {details ? <p className="mt-2 text-xs text-slate-300/75">{details}</p> : null}
 
           {status === 'verifying' ? (
             <div className="mt-6 inline-flex items-center gap-2 text-sm text-[var(--accent)]">

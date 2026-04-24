@@ -16,6 +16,9 @@ export default function Approvals() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('pending')
   const [typeFilter, setTypeFilter] = useState('')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
+  const [minPlanCost, setMinPlanCost] = useState('')
+  const [maxPlanCost, setMaxPlanCost] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [selected, setSelected] = useState(null)
@@ -41,6 +44,9 @@ export default function Approvals() {
             status: statusFilter || 'pending',
             search,
             member_type: typeFilter || undefined,
+            payment_status: paymentStatusFilter === 'all' ? undefined : paymentStatusFilter,
+            min_plan_cost: minPlanCost || undefined,
+            max_plan_cost: maxPlanCost || undefined,
             from_date: fromDate || undefined,
             to_date: toDate || undefined,
           })
@@ -79,7 +85,7 @@ export default function Approvals() {
       clearTimeout(timeout)
       active = false
     }
-  }, [search, statusFilter, typeFilter, fromDate, toDate])
+  }, [search, statusFilter, typeFilter, paymentStatusFilter, minPlanCost, maxPlanCost, fromDate, toDate])
 
   const handleApprove = async () => {
     if (!selected) return
@@ -126,6 +132,9 @@ export default function Approvals() {
         status: statusFilter || 'pending',
         search,
         member_type: typeFilter || undefined,
+        payment_status: paymentStatusFilter === 'all' ? undefined : paymentStatusFilter,
+        min_plan_cost: minPlanCost || undefined,
+        max_plan_cost: maxPlanCost || undefined,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
       })
@@ -170,6 +179,9 @@ export default function Approvals() {
                   status: statusFilter || 'pending',
                   search,
                   member_type: typeFilter || undefined,
+                  payment_status: paymentStatusFilter === 'all' ? undefined : paymentStatusFilter,
+                  min_plan_cost: minPlanCost || undefined,
+                  max_plan_cost: maxPlanCost || undefined,
                   from_date: fromDate || undefined,
                   to_date: toDate || undefined,
                 })
@@ -215,7 +227,7 @@ export default function Approvals() {
           </div>
         ) : null}
 
-        <div className="mt-6 grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
+        <div className="mt-6 grid gap-3 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -241,8 +253,38 @@ export default function Approvals() {
             <option value="university">University</option>
             <option value="external">External</option>
           </select>
+          <select
+            value={paymentStatusFilter}
+            onChange={(event) => setPaymentStatusFilter(event.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+          >
+            <option value="all">All Payment</option>
+            <option value="Paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+          </select>
         </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div className="mt-3 grid gap-3 md:grid-cols-4">
+          <label className="text-xs text-[var(--text-soft)]">
+            Min Plan Cost (ETB)
+            <input
+              type="number"
+              min="0"
+              value={minPlanCost}
+              onChange={(event) => setMinPlanCost(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+            />
+          </label>
+          <label className="text-xs text-[var(--text-soft)]">
+            Max Plan Cost (ETB)
+            <input
+              type="number"
+              min="0"
+              value={maxPlanCost}
+              onChange={(event) => setMaxPlanCost(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-sm"
+            />
+          </label>
           <label className="text-xs text-[var(--text-soft)]">
             From
             <input
@@ -298,6 +340,9 @@ export default function Approvals() {
               onClick={() => {
                 setFromDate('')
                 setToDate('')
+                setMinPlanCost('')
+                setMaxPlanCost('')
+                setPaymentStatusFilter('all')
               }}
               className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--text)]"
             >

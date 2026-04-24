@@ -37,6 +37,21 @@ class ApprovalService
             $query->where('member_type', $memberType);
         }
 
+        $paymentStatus = $filters['payment_status'] ?? null;
+        if ($paymentStatus && strtolower($paymentStatus) !== 'all') {
+            $query->where('payment_status', $paymentStatus);
+        }
+
+        $minPlanCost = $filters['min_plan_cost'] ?? null;
+        if (is_numeric($minPlanCost)) {
+            $query->where('plan_cost', '>=', (int) $minPlanCost);
+        }
+
+        $maxPlanCost = $filters['max_plan_cost'] ?? null;
+        if (is_numeric($maxPlanCost)) {
+            $query->where('plan_cost', '<=', (int) $maxPlanCost);
+        }
+
         $fromDate = $filters['from_date'] ?? null;
         if ($fromDate) {
             $query->whereDate('created_at', '>=', $fromDate);
