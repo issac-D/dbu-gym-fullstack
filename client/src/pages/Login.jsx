@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 
 function DumbbellIcon({ className }) {
@@ -65,6 +65,7 @@ function LockIcon({ className }) {
 
 export default function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login } = useAuth()
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -72,6 +73,20 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [touched, setTouched] = useState({ email: false, password: false })
   const [showPassword, setShowPassword] = useState(false)
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+
+  useEffect(() => {
+    const oauthError = (searchParams.get('oauth_error') || '').toLowerCase()
+    if (!oauthError) return
+
+    const messages = {
+      google_callback_failed: 'Google login failed. Please try again.',
+      google_email_missing: 'Your Google account does not provide an email address.',
+      account_not_found: 'No account found for this Google email. Use email/password login.',
+    }
+
+    setError(messages[oauthError] || 'Google login failed. Please try again.')
+  }, [searchParams])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -106,7 +121,7 @@ export default function Login() {
   }
 
   const handleGoogleLogin = () => {
-    setError('Google login is not configured yet. Please use email/password for now.')
+    window.location.assign(`${API_BASE}/api/auth/google/redirect`)
   }
 
   return (
