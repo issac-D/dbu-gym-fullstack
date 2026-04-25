@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\MembersController as AdminMembersController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\SystemSettingsController as AdminSystemSettingsController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
 use App\Http\Controllers\Member\MembershipController as MemberMembershipController;
 use App\Http\Controllers\Member\ProfileController as MemberProfileController;
@@ -20,6 +21,8 @@ Route::get('/health', function () {
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('guest');
     Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
+    Route::get('/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');
+    Route::get('/google/callback', [GoogleAuthController::class, 'callback'])->middleware('guest');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 });
