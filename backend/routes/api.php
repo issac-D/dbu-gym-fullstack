@@ -21,8 +21,8 @@ Route::get('/health', function () {
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('guest');
     Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
-    Route::get('/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');
-    Route::get('/google/callback', [GoogleAuthController::class, 'callback'])->middleware('guest');
+    Route::get('/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware(['web', 'guest']);
+    Route::get('/google/callback', [GoogleAuthController::class, 'callback'])->middleware(['web', 'guest']);
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 });
